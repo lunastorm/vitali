@@ -19,22 +19,23 @@ func writeResponse(w *wrappedWriter, r *http.Request, response interface{}) {
     case badRequest:
         http.Error(w, v.reason, http.StatusBadRequest)
     case notFound:
-        http.Error(w, "not found", http.StatusNotFound)
+        http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
     case methodNotAllowed:
         w.Header().Set("Allow", strings.Join(v.allowed, ", "))
-        http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+        http.Error(w, http.StatusText(http.StatusMethodNotAllowed),
+            http.StatusMethodNotAllowed)
     case internalError:
         w.err = v
-        http.Error(w, fmt.Sprintf("internal server error: %d", w.err.code),
-            http.StatusInternalServerError)
+        http.Error(w, fmt.Sprintf("%s: %d", http.StatusText(http.StatusInternalServerError),
+            w.err.code), http.StatusInternalServerError)
     case error:
         w.err = internalError{
             where: "",
             why: v.Error(),
             code: errorCode(v.Error()),
         }
-        http.Error(w, fmt.Sprintf("internal server error: %d", w.err.code),
-            http.StatusInternalServerError)
+        http.Error(w, fmt.Sprintf("%s: %d", http.StatusText(http.StatusInternalServerError),
+            w.err.code), http.StatusInternalServerError)
     case clientGone:
     default:
         w.WriteHeader(http.StatusOK)
