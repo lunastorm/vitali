@@ -28,6 +28,8 @@ func writeResponse(w *wrappedWriter, r *http.Request, response interface{}) {
         w.err = v
         http.Error(w, fmt.Sprintf("%s: %d", http.StatusText(http.StatusInternalServerError),
             w.err.code), http.StatusInternalServerError)
+    case notImplemented:
+        http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
     case error:
         w.err = internalError{
             where: "",
