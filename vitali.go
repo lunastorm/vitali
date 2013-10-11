@@ -161,7 +161,10 @@ func getResult(method string, resource interface{}) (result interface{}) {
         return notImplemented{}
     }
 
-    return methodNotAllowed{getAllowed(resource)}
+    if result == nil {
+        return methodNotAllowed{getAllowed(resource)}
+    }
+    return
 }
 
 func (c webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
