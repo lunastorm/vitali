@@ -35,6 +35,15 @@ func (c Ctx) NotFound() notFound {
     return notFound{}
 }
 
+// 405
+type methodNotAllowed struct {
+    allowed []string
+}
+
+func (c Ctx) MethodNotAllowed(allowed []string) methodNotAllowed {
+    return methodNotAllowed{allowed}
+}
+
 // 501
 type notImplemented struct {
 }

@@ -104,6 +104,26 @@ func matchRules(c webApp, w *wrappedWriter, r *http.Request) {
     http.NotFound(w, r)
 }
 
+func getAllowed(resource interface{}) (allowed []string) {
+    _, ok := resource.(Getter)
+    if ok {
+        allowed = append(allowed, "GET", "HEAD")
+    }
+    _, ok = resource.(Poster)
+    if ok {
+        allowed = append(allowed, "POST")
+    }
+    _, ok = resource.(Putter)
+    if ok {
+        allowed = append(allowed, "PUT")
+    }
+    _, ok = resource.(Deleter)
+    if ok {
+        allowed = append(allowed, "DELETE")
+    }
+    return
+}
+
 func getResult(method string, resource interface{}) (result interface{}) {
     defer func() {
         if r := recover(); r != nil {
@@ -140,7 +160,8 @@ func getResult(method string, resource interface{}) (result interface{}) {
     default:
         return notImplemented{}
     }
-    return
+
+    return methodNotAllowed{getAllowed(resource)}
 }
 
 func (c webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {

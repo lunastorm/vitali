@@ -2,6 +2,7 @@ package vitali
 
 import (
     "fmt"
+    "strings"
     "net/http"
 )
 
@@ -19,6 +20,9 @@ func writeResponse(w *wrappedWriter, r *http.Request, response interface{}) {
         http.Error(w, v.reason, http.StatusBadRequest)
     case notFound:
         http.Error(w, "not found", http.StatusNotFound)
+    case methodNotAllowed:
+        w.Header().Set("Allow", strings.Join(v.allowed, ", "))
+        http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
     case internalError:
         w.err = v
         http.Error(w, fmt.Sprintf("internal server error: %d", w.err.code),
