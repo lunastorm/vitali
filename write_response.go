@@ -24,6 +24,9 @@ func writeResponse(w *wrappedWriter, r *http.Request, response interface{}) {
         w.Header().Set("Allow", strings.Join(v.allowed, ", "))
         http.Error(w, http.StatusText(http.StatusMethodNotAllowed),
             http.StatusMethodNotAllowed)
+    case unsupportedMediaType:
+        http.Error(w, http.StatusText(http.StatusUnsupportedMediaType),
+            http.StatusUnsupportedMediaType)
     case internalError:
         w.err = v
         http.Error(w, fmt.Sprintf("%s: %d", http.StatusText(http.StatusInternalServerError),

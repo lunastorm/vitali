@@ -60,7 +60,7 @@ func checkMediaType(accept Accept, method Method, mediaType MediaType) bool {
     return false
 }
 
-func matchRules(c webApp, w *wrappedWriter, r *http.Request) {
+func matchRules(c webApp, w *wrappedWriter, r *http.Request) (result interface{}) {
     for i, routeRule := range c.RouteRules {
         params := c.PatternMappings[i].Re.FindStringSubmatch(r.URL.Path)
         if params != nil {
@@ -102,13 +102,12 @@ func matchRules(c webApp, w *wrappedWriter, r *http.Request) {
                         } else {
                             http.Error(w, "unauthorized", http.StatusUnauthorized)
                         }
-                        return
+                        return w
                     }
                 case "Accept":
                     if !checkMediaType(srcField.Interface().(Accept), Method(r.Method),
                             MediaType(r.Header.Get("Content-Type"))) {
-                        w.WriteHeader(http.StatusUnsupportedMediaType)
-                        return
+                        return unsupportedMediaType{}
                     }
                 default:
                     newField.Set(srcField)
@@ -117,11 +116,10 @@ func matchRules(c webApp, w *wrappedWriter, r *http.Request) {
             resource := vNewResource.Interface()
 
             result := getResult(r.Method, resource)
-            writeResponse(w, r, result)
-            return
+            return result
         }
     }
-    http.NotFound(w, r)
+    return notFound{}
 }
 
 func getAllowed(resource interface{}) (allowed []string) {
@@ -195,7 +193,8 @@ func (c webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         inTime: time.Now(),
     }
 
-    matchRules(c, ww, r)
+    result := matchRules(c, ww, r)
+    writeResponse(ww, r, result)
 
     elapsedMs := float64(time.Now().UnixNano() - ww.inTime.UnixNano()) / 1000000
     if ww.status == 0 {
@@ -205,6 +204,10 @@ func (c webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         errMsg := ""
         if ww.err.why != "" {
             errMsg = fmt.Sprintf("%s #%d %s ", ww.err.where, ww.err.code, ww.err.why)
+        }
+        switch result.(type) {
+        case unsupportedMediaType:
+            errMsg = fmt.Sprintf(": %s ", r.Header.Get("Content-Type"))
         }
         log.Printf("%s %s %s %s %s(%.2f ms, %d bytes)", r.RemoteAddr, r.Method, r.URL.Path,
             http.StatusText(ww.status), errMsg, elapsedMs, ww.written)
