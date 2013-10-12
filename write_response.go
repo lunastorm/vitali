@@ -38,6 +38,7 @@ func writeResponse(w *wrappedWriter, r *http.Request, response interface{}) {
         }
         http.Error(w, fmt.Sprintf("%s: %d", http.StatusText(http.StatusInternalServerError),
             w.err.code), http.StatusInternalServerError)
+    case http.ResponseWriter:
     case clientGone:
     default:
         w.WriteHeader(http.StatusOK)
