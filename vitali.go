@@ -39,12 +39,25 @@ type webApp struct {
     Settings map[string]string
 }
 
-func checkPermission(perm Perm, method string, user string) bool {
+func checkPermission(perm Perm, method Method, user string) bool {
     required, exist := perm[method]
     if !exist {
         required = perm["*"]
     }
     return !(required==AUTHENTICATED && user == "")
+}
+
+func checkMediaType(accept Accept, method Method, mediaType MediaType) bool {
+    acceptedTypes, exist := accept[method]
+    if !exist {
+        return true
+    }
+    for _, acceptedType := range acceptedTypes {
+        if mediaType == acceptedType {
+            return true
+        }
+    }
+    return false
 }
 
 func matchRules(c webApp, w *wrappedWriter, r *http.Request) {
@@ -75,7 +88,8 @@ func matchRules(c webApp, w *wrappedWriter, r *http.Request) {
                 case "Ctx":
                     newField.Set(reflect.ValueOf(ctx))
                 case "Perm":
-                    if !checkPermission(srcField.Interface().(Perm), r.Method, ctx.Username) {
+                    if !checkPermission(srcField.Interface().(Perm), Method(r.Method),
+                            ctx.Username) {
                         if c.Settings["401_PAGE"] != "" {
                             w.Header().Set("Content-Type", "text/html")
                             w.Header()["WWW-Authenticate"] = []string{c.UserProvider.AuthHeader(r)}
@@ -88,6 +102,12 @@ func matchRules(c webApp, w *wrappedWriter, r *http.Request) {
                         } else {
                             http.Error(w, "unauthorized", http.StatusUnauthorized)
                         }
+                        return
+                    }
+                case "Accept":
+                    if !checkMediaType(srcField.Interface().(Accept), Method(r.Method),
+                            MediaType(r.Header.Get("Content-Type"))) {
+                        w.WriteHeader(http.StatusUnsupportedMediaType)
                         return
                     }
                 default:
@@ -225,4 +245,9 @@ func CreateWebApp(rules []RouteRule) webApp {
     }
 }
 
-type Perm map[string]int
+type Method string
+type Perm map[Method]int
+
+type MediaType string
+type MediaTypes []MediaType
+type Accept map[Method]MediaTypes
