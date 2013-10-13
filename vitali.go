@@ -27,11 +27,6 @@ type PatternMapping struct {
     Names []string
 }
 
-type UserProvider interface {
-    AuthHeader(*http.Request) string
-    User(*http.Request) string
-}
-
 type webApp struct {
     RouteRules []RouteRule
     PatternMappings []PatternMapping
@@ -212,17 +207,6 @@ func (c webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         log.Printf("%s %s %s %s %s(%.2f ms, %d bytes)", r.RemoteAddr, r.Method, r.URL.Path,
             http.StatusText(ww.status), errMsg, elapsedMs, ww.written)
     }
-}
-
-type EmptyUserProvider struct {
-}
-
-func (c EmptyUserProvider) AuthHeader(r *http.Request) string {
-    return ""
-}
-
-func (c EmptyUserProvider) User(r *http.Request) string {
-    return ""
 }
 
 func CreateWebApp(rules []RouteRule) webApp {
