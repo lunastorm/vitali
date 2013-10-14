@@ -6,8 +6,12 @@ import (
     "net/http"
 )
 
-func writeResponse(w *wrappedWriter, r *http.Request, response interface{}) {
+func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interface{}) {
     switch v := response.(type) {
+    case view:
+        w.Header().Set("Content-Type", "text/html")
+        w.WriteHeader(http.StatusOK)
+        v.template.Execute(w, v.model)
     case found:
         w.Header().Set("Location", v.uri)
         w.WriteHeader(http.StatusFound)
@@ -29,8 +33,14 @@ func writeResponse(w *wrappedWriter, r *http.Request, response interface{}) {
             http.StatusUnsupportedMediaType)
     case internalError:
         w.err = v
-        http.Error(w, fmt.Sprintf("%s: %d", http.StatusText(http.StatusInternalServerError),
-            w.err.code), http.StatusInternalServerError)
+        if c.ErrTemplate != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            md := struct {Code uint32}{w.err.code}
+            c.ErrTemplate.Execute(w, md)
+        } else {
+            http.Error(w, fmt.Sprintf("%s: %d", http.StatusText(http.StatusInternalServerError),
+                w.err.code), http.StatusInternalServerError)
+        }
     case notImplemented:
         http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
     case error:

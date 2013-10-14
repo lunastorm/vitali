@@ -5,6 +5,7 @@ import (
     "net/http"
     "net/url"
     "net/http/httptest"
+    htmltemplate "html/template"
 )
 
 func TestNotFound(t *testing.T) {
@@ -51,6 +52,44 @@ func TestOK(t *testing.T) {
     }
     entity := rr.Body.String()
     if entity != "root" {
+        t.Errorf("entity is `%s`", entity)
+    }
+}
+
+type Templated struct {
+    Ctx
+    T *htmltemplate.Template
+}
+
+func (c Templated) Get() interface{} {
+    model := struct{Foo string}{"foo"}
+    return View(c.T, model)
+}
+
+func TestTemplate(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/templated",
+        },
+    }
+    rr := httptest.NewRecorder()
+    tmp := htmltemplate.New("test")
+    tmp.Parse("{{.Foo}}")
+
+    webapp := CreateWebApp([]RouteRule{
+        {"/templated", Templated{
+            T: tmp,
+        }},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    entity := rr.Body.String()
+    if entity != "foo" {
         t.Errorf("entity is `%s`", entity)
     }
 }

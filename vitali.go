@@ -7,6 +7,7 @@ import (
     "fmt"
     "net/http"
     "net/http/httputil"
+    "html/template"
     "time"
     "regexp"
     "strings"
@@ -34,6 +35,7 @@ type webApp struct {
     UserProvider UserProvider
     Settings map[string]string
     DumpRequest bool
+    ErrTemplate *template.Template
 }
 
 func checkPermission(perm Perm, method Method, user string) bool {
@@ -57,7 +59,7 @@ func checkMediaType(accept Accept, method Method, mediaType MediaType) bool {
     return false
 }
 
-func matchRules(c webApp, w *wrappedWriter, r *http.Request) (result interface{}) {
+func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{}) {
     for i, routeRule := range c.RouteRules {
         params := c.PatternMappings[i].Re.FindStringSubmatch(r.URL.Path)
         if params != nil {
@@ -213,8 +215,8 @@ func (c webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         inTime: time.Now(),
     }
     r.ParseForm()
-    result := matchRules(c, ww, r)
-    writeResponse(ww, r, result)
+    result := c.matchRules(ww, r)
+    c.writeResponse(ww, r, result)
 
     elapsedMs := float64(time.Now().UnixNano() - ww.inTime.UnixNano()) / 1000000
     c.logRequest(ww, r, elapsedMs, result)
