@@ -55,6 +55,42 @@ func TestOK(t *testing.T) {
     }
 }
 
+type Info struct {
+    Ctx
+    Provided string
+    Provided2 string
+}
+
+func (c Info) Get() interface{} {
+    return c.Provided + c.Provided2
+}
+
+func TestProvided(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/info",
+        },
+    }
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/info", Info{
+            Provided: "foo",
+            Provided2: "bar",
+            }},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    entity := rr.Body.String()
+    if entity != "foobar" {
+        t.Errorf("entity is `%s`", entity)
+    }
+}
+
 func TestMethodNotAllowed(t *testing.T) {
     r := &http.Request{
         Method: "POST",
@@ -125,6 +161,39 @@ func TestPathParam(t *testing.T) {
     entity := rr.Body.String()
     if entity != "123456" {
         t.Errorf("entity is `%s`", entity)
+    }
+}
+
+type Something2 struct {
+    Ctx
+}
+
+func (c Something2) Get() interface{} {
+    return c.Param("id")
+}
+
+func TestForm(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/something2",
+        },
+        Form: make(url.Values),
+    }
+    r.Form.Add("id", "5566")
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/something2", Something2{}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    entity := rr.Body.String()
+    if entity != "5566" {
+        t.Errorf("id is `%s`", entity)
     }
 }
 
@@ -216,6 +285,139 @@ func TestAuthed(t *testing.T) {
     entity := rr.Body.String()
     if entity != "bob" {
         t.Errorf("user is `%s`", entity)
+    }
+}
+
+type Bad struct {
+    Ctx
+}
+
+func (c Bad) Get() interface{} {
+    return c.BadRequest("reason")
+}
+
+func TestBadRequest(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/bad",
+        },
+    }
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/bad", Bad{}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusBadRequest {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    entity := rr.Body.String()
+    if entity != "reason\n" {
+        t.Errorf("entity is `%s`", entity)
+    }
+}
+
+type AcceptSomething struct {
+    Ctx
+    Accept
+}
+
+func (c AcceptSomething) Post() interface{} {
+    return "success"
+}
+
+func TestAccept(t *testing.T) {
+    r := &http.Request{
+        Method: "POST",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/accept",
+        },
+        Header: make(http.Header),
+    }
+    webapp := CreateWebApp([]RouteRule{
+        {"/accept", AcceptSomething{
+            Accept: Accept{"POST": MediaTypes{"application/json", "application/xml"}},
+        }},
+    })
+
+    rr := httptest.NewRecorder()
+    webapp.ServeHTTP(rr, r)
+    if rr.Code != http.StatusUnsupportedMediaType {
+        t.Errorf("response code is %d", rr.Code)
+    }
+
+    r.Header.Set("Content-Type", "application/json")
+    rr = httptest.NewRecorder()
+    webapp.ServeHTTP(rr, r)
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
+
+    r.Header.Set("Content-Type", "application/xml")
+    rr = httptest.NewRecorder()
+    webapp.ServeHTTP(rr, r)
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
+
+    r.Header.Set("Content-Type", "text/plain")
+    rr = httptest.NewRecorder()
+    webapp.ServeHTTP(rr, r)
+    if rr.Code != http.StatusUnsupportedMediaType {
+        t.Errorf("response code is %d", rr.Code)
+    }
+}
+
+type Redirects struct {
+    Ctx
+}
+
+func (c Redirects) Get() interface{} {
+    switch c.Param("type") {
+    case "found":
+        return c.Found("/found")
+    case "seeother":
+        return c.SeeOther("/seeother")
+    }
+    return ""
+}
+
+func TestRedirects(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/redirects",
+        },
+        Form: make(url.Values),
+    }
+    webapp := CreateWebApp([]RouteRule{
+        {"/redirects", Redirects{}},
+    })
+
+    r.Form.Set("type", "found")
+    rr := httptest.NewRecorder()
+    webapp.ServeHTTP(rr, r)
+    if rr.Code != http.StatusFound {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    location := rr.Header().Get("Location")
+    if location != "/found" {
+        t.Errorf("location is `%s`", location)
+    }
+
+    r.Form.Set("type", "seeother")
+    rr = httptest.NewRecorder()
+    webapp.ServeHTTP(rr, r)
+    if rr.Code != http.StatusSeeOther {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    location = rr.Header().Get("Location")
+    if location != "/seeother" {
+        t.Errorf("location is `%s`", location)
     }
 }
 
