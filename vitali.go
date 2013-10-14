@@ -6,6 +6,7 @@ import (
     "log"
     "fmt"
     "net/http"
+    "net/http/httputil"
     "time"
     "regexp"
     "strings"
@@ -32,6 +33,7 @@ type webApp struct {
     PatternMappings []PatternMapping
     UserProvider UserProvider
     Settings map[string]string
+    DumpRequest bool
 }
 
 func checkPermission(perm Perm, method Method, user string) bool {
@@ -180,33 +182,42 @@ func getResult(method string, resource interface{}) (result interface{}) {
     return
 }
 
-func (c webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-    r.ParseForm()
-    ww := &wrappedWriter{
-        status: 0,
-        writer: w,
-        inTime: time.Now(),
-    }
-
-    result := matchRules(c, ww, r)
-    writeResponse(ww, r, result)
-
-    elapsedMs := float64(time.Now().UnixNano() - ww.inTime.UnixNano()) / 1000000
-    if ww.status == 0 {
+func (c webApp) logRequest(w *wrappedWriter, r *http.Request, elapsedMs float64,
+        result interface{}) {
+    if w.status == 0 {
         log.Printf("%s %s %s Client Disconnected (%.2f ms)", r.RemoteAddr, r.Method,
             r.URL.Path, elapsedMs)
     } else {
         errMsg := ""
-        if ww.err.why != "" {
-            errMsg = fmt.Sprintf("%s #%d %s ", ww.err.where, ww.err.code, ww.err.why)
+        if w.err.why != "" {
+            errMsg = fmt.Sprintf("%s #%d %s ", w.err.where, w.err.code, w.err.why)
         }
         switch result.(type) {
         case unsupportedMediaType:
             errMsg = fmt.Sprintf(": %s ", r.Header.Get("Content-Type"))
         }
         log.Printf("%s %s %s %s %s(%.2f ms, %d bytes)", r.RemoteAddr, r.Method, r.URL.Path,
-            http.StatusText(ww.status), errMsg, elapsedMs, ww.written)
+            http.StatusText(w.status), errMsg, elapsedMs, w.written)
+
+        if c.DumpRequest {
+            dump, _ := httputil.DumpRequest(r, false)
+            log.Printf("%s", dump)
+        }
     }
+}
+
+func (c webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+    ww := &wrappedWriter{
+        status: 0,
+        writer: w,
+        inTime: time.Now(),
+    }
+    r.ParseForm()
+    result := matchRules(c, ww, r)
+    writeResponse(ww, r, result)
+
+    elapsedMs := float64(time.Now().UnixNano() - ww.inTime.UnixNano()) / 1000000
+    c.logRequest(ww, r, elapsedMs, result)
 }
 
 func CreateWebApp(rules []RouteRule) webApp {
