@@ -9,6 +9,6 @@ type view struct {
     model interface{}
 }
 
-func View(template *template.Template, model interface{}) view {
+func (c Ctx) View(template *template.Template, model interface{}) view {
     return view{template, model}
 }
