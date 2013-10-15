@@ -16,6 +16,11 @@ func (c Ctx) AddHeader(key string, value string) {
     c.ResponseWriter.Header().Add(key, value)
 }
 
+func (c Ctx) Cookie(name string) (value string) {
+    cookie, _ := c.Request.Cookie(name)
+    return cookie.Value
+}
+
 func (c Ctx) SetCookie(cookie *http.Cookie) {
     http.SetCookie(c.ResponseWriter, cookie)
 }

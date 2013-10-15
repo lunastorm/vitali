@@ -1,5 +1,13 @@
 package vitali
 
+//204
+type  noContent struct {
+}
+
+func (c Ctx) NoContent() noContent {
+    return noContent{}
+}
+
 // 302
 type found struct {
     uri string

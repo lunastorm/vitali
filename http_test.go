@@ -56,6 +56,33 @@ func TestOK(t *testing.T) {
     }
 }
 
+type Nothing struct {
+    Ctx
+}
+
+func (c Nothing) Get() interface{} {
+    return c.NoContent()
+}
+
+func TestNoContent(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/nothing",
+        },
+    }
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/nothing", Nothing{}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusNoContent {
+        t.Errorf("response code is %d", rr.Code)
+    }
+}
+
 type Templated struct {
     Ctx
     T *htmltemplate.Template

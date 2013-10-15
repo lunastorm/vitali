@@ -8,6 +8,8 @@ import (
 
 func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interface{}) {
     switch v := response.(type) {
+    case noContent:
+        w.WriteHeader(http.StatusNoContent)
     case view:
         w.Header().Set("Content-Type", "text/html")
         w.WriteHeader(http.StatusOK)
