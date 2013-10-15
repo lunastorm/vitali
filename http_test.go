@@ -90,7 +90,7 @@ type Templated struct {
 
 func (c Templated) Get() interface{} {
     model := struct{Foo string}{"foo"}
-    return View(c.T, model)
+    return c.View(c.T, model)
 }
 
 func TestTemplate(t *testing.T) {
