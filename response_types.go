@@ -35,6 +35,14 @@ func (c Ctx) BadRequest(reason string) badRequest {
     return badRequest{reason}
 }
 
+// 403
+type forbidden struct {
+}
+
+func (c Ctx) Forbidden() forbidden {
+    return forbidden{}
+}
+
 // 404
 type notFound struct {
 }

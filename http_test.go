@@ -90,7 +90,7 @@ type Templated struct {
 
 func (c Templated) Get() interface{} {
     model := struct{Foo string}{"foo"}
-    return View(c.T, model)
+    return c.View(c.T, model)
 }
 
 func TestTemplate(t *testing.T) {
@@ -484,6 +484,33 @@ func TestRedirects(t *testing.T) {
     location = rr.Header().Get("Location")
     if location != "/seeother" {
         t.Errorf("location is `%s`", location)
+    }
+}
+
+type Forbid struct {
+    Ctx
+}
+
+func (c Forbid) Get() interface{} {
+    return c.Forbidden()
+}
+
+func TestForbidden(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/forbid",
+        },
+    }
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/forbid", Forbid{}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusForbidden {
+        t.Errorf("response code is %d", rr.Code)
     }
 }
 

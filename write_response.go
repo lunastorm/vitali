@@ -24,6 +24,8 @@ func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interf
         fmt.Fprintf(w, "%s\n", v.uri)
     case badRequest:
         http.Error(w, v.reason, http.StatusBadRequest)
+    case forbidden:
+        http.Error(w, "Forbidden", http.StatusForbidden)
     case notFound:
         http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
     case methodNotAllowed:
