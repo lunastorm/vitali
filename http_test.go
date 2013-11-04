@@ -263,6 +263,39 @@ func TestForm(t *testing.T) {
     }
 }
 
+type HeaderFoo struct {
+    Ctx
+}
+
+func (c HeaderFoo) Get() interface{} {
+    return c.Header("foo")
+}
+
+func TestHeader(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/headerfoo",
+        },
+        Header: make(http.Header),
+    }
+    r.Header.Set("foo", "bar")
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/headerfoo", HeaderFoo{}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    entity := rr.Body.String()
+    if entity != "bar" {
+        t.Errorf("entity is `%s`", entity)
+    }
+}
+
 type NeedAuth struct {
     Ctx
     Perm
