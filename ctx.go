@@ -36,3 +36,7 @@ func (c Ctx) ParamArray(key string) []string {
 func (c Ctx) PathParam(key string) string {
     return c.pathParams[key]
 }
+
+func (c Ctx) Header(key string) string {
+    return c.Request.Header.Get(key)
+}
