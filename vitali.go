@@ -225,14 +225,14 @@ func (c webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func CreateWebApp(rules []RouteRule) webApp {
     patternMappings := make([]PatternMapping, len(rules))
     for i, v := range rules {
-        re := regexp.MustCompile("{[^}]*}")
+        re := regexp.MustCompile("/{[^}]*}")
         params := re.FindAllString(v.Pattern, -1)
         names := make([]string, len(params))
 
         transformedPattern := v.Pattern
         for j, param := range params {
-            names[j] = param[1:len(param)-1]
-            transformedPattern = strings.Replace(transformedPattern, param, "([^/]+)", -1)
+            names[j] = param[2:len(param)-1]
+            transformedPattern = strings.Replace(transformedPattern, param, "[/]{0,1}([^/]*)", -1)
         }
         patternMappings[i] = PatternMapping{regexp.MustCompile("^"+transformedPattern+"$"), names}
     }
