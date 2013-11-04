@@ -230,6 +230,48 @@ func TestPathParam(t *testing.T) {
     }
 }
 
+type PathOptional struct {
+    Ctx
+}
+
+func (c PathOptional) Get() interface{} {
+    return c.PathParam("id")
+}
+
+func TestOptionalPathParam(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/foo/123",
+        },
+    }
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/foo/{id}", PathOptional{}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    entity := rr.Body.String()
+    if entity != "123" {
+        t.Errorf("entity is `%s`", entity)
+    }
+
+    r.URL.Path = "/foo"
+    rr = httptest.NewRecorder()
+    webapp.ServeHTTP(rr, r)
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    entity = rr.Body.String()
+    if entity != "" {
+        t.Errorf("entity is `%s`", entity)
+    }
+}
+
 type Something2 struct {
     Ctx
 }
