@@ -32,6 +32,14 @@ func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interf
         w.Header().Set("Allow", strings.Join(v.allowed, ", "))
         http.Error(w, http.StatusText(http.StatusMethodNotAllowed),
             http.StatusMethodNotAllowed)
+    case notAcceptable:
+        w.Header().Set("Content-Type", "text/csv")
+        types := make([]string, len(v.provided))
+        for i, mediaType := range(v.provided){
+            types[i] = string(mediaType)
+        }
+        http.Error(w, strings.Join(([]string)(types), ","),
+            http.StatusNotAcceptable)
     case unsupportedMediaType:
         http.Error(w, http.StatusText(http.StatusUnsupportedMediaType),
             http.StatusUnsupportedMediaType)

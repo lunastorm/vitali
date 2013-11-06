@@ -60,6 +60,15 @@ func (c Ctx) MethodNotAllowed(allowed []string) methodNotAllowed {
     return methodNotAllowed{allowed}
 }
 
+//406
+type notAcceptable struct {
+    provided MediaTypes
+}
+
+func (c Ctx) NotAcceptable(provided MediaTypes) notAcceptable {
+    return notAcceptable{provided}
+}
+
 // 415
 type unsupportedMediaType struct {
 }

@@ -5,6 +5,7 @@ import (
     "io"
     "log"
     "fmt"
+    "strconv"
     "net/http"
     "net/http/httputil"
     "html/template"
@@ -59,6 +60,49 @@ func checkMediaType(accept Accept, method Method, mediaType MediaType) bool {
     return false
 }
 
+type typeWithPriority struct {
+    t string
+    q float64
+}
+
+func chooseType(provided MediaTypes, acceptHeader string) MediaType {
+    if acceptHeader == "" {
+        acceptHeader = "*/*"
+    }
+
+    typeAndParams := strings.Split(acceptHeader, ",")
+    typeWithPriorities := make([]typeWithPriority, len(typeAndParams))
+    for i, tpstr := range(typeAndParams) {
+        tppair := strings.Split(tpstr, ";")
+        var q float64
+        if len(tppair) == 1 {
+            q = 1.0
+        } else {
+            q, _ = strconv.ParseFloat(strings.TrimSpace(tppair[1])[2:], 32)
+        }
+        j := 0
+        for ; j<i ; j++ {
+            if q > typeWithPriorities[j].q {
+                break
+            }
+        }
+        typeWithPriorities = append(typeWithPriorities[:j],
+            append([]typeWithPriority{typeWithPriority{strings.TrimSpace(tppair[0]), q}},
+                typeWithPriorities[j:]...)...)[:len(typeAndParams)]
+    }
+
+    for _, t := range(typeWithPriorities) {
+        for _, p := range(provided) {
+            matched, _ := regexp.MatchString(fmt.Sprintf("^%s$",
+                strings.Replace(t.t, "*", "[^/]+", -1)), string(p))
+            if matched {
+                return p
+            }
+        }
+    }
+    return ""
+}
+
 func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{}) {
     for i, routeRule := range c.RouteRules {
         params := c.PatternMappings[i].Re.FindStringSubmatch(r.URL.Path)
@@ -78,6 +122,18 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
             }
 
             vResource := reflect.ValueOf(routeRule.Resource)
+            vProvides := vResource.FieldByName("Provides")
+            if vProvides.IsValid() {
+                provided := vProvides.Interface().(Provides)[Method(r.Method)]
+                if len(provided) > 0 {
+                    ctx.ChosenType = chooseType(provided, r.Header.Get("Accept"))
+                    if ctx.ChosenType == "" {
+                        return notAcceptable{vProvides.Interface().(Provides)[Method(r.Method)]}
+                    }
+                    w.Header().Set("Content-Type", string(ctx.ChosenType))
+                }
+            }
+
             vNewResource := reflect.New(reflect.TypeOf(routeRule.Resource)).Elem()
             for i := 0; i < vResource.NumField(); i++ {
                 srcField := vResource.Field(i)
@@ -251,3 +307,4 @@ type Perm map[Method]int
 type MediaType string
 type MediaTypes []MediaType
 type Accept map[Method]MediaTypes
+type Provides map[Method]MediaTypes

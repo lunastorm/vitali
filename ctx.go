@@ -8,6 +8,7 @@ type Ctx struct {
     Username    string
     Request *http.Request
     ResponseWriter  http.ResponseWriter
+    ChosenType  MediaType
 
     pathParams map[string]string
 }
