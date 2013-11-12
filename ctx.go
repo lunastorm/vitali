@@ -8,6 +8,7 @@ type Ctx struct {
     Username    string
     Request *http.Request
     ResponseWriter  http.ResponseWriter
+    ChosenType  MediaType
 
     pathParams map[string]string
 }
@@ -35,4 +36,8 @@ func (c Ctx) ParamArray(key string) []string {
 
 func (c Ctx) PathParam(key string) string {
     return c.pathParams[key]
+}
+
+func (c Ctx) Header(key string) string {
+    return c.Request.Header.Get(key)
 }

@@ -230,6 +230,48 @@ func TestPathParam(t *testing.T) {
     }
 }
 
+type PathOptional struct {
+    Ctx
+}
+
+func (c PathOptional) Get() interface{} {
+    return c.PathParam("id")
+}
+
+func TestOptionalPathParam(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/foo/123",
+        },
+    }
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/foo/{id}", PathOptional{}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    entity := rr.Body.String()
+    if entity != "123" {
+        t.Errorf("entity is `%s`", entity)
+    }
+
+    r.URL.Path = "/foo"
+    rr = httptest.NewRecorder()
+    webapp.ServeHTTP(rr, r)
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    entity = rr.Body.String()
+    if entity != "" {
+        t.Errorf("entity is `%s`", entity)
+    }
+}
+
 type Something2 struct {
     Ctx
 }
@@ -260,6 +302,39 @@ func TestForm(t *testing.T) {
     entity := rr.Body.String()
     if entity != "5566" {
         t.Errorf("id is `%s`", entity)
+    }
+}
+
+type HeaderFoo struct {
+    Ctx
+}
+
+func (c HeaderFoo) Get() interface{} {
+    return c.Header("foo")
+}
+
+func TestHeader(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/headerfoo",
+        },
+        Header: make(http.Header),
+    }
+    r.Header.Set("foo", "bar")
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/headerfoo", HeaderFoo{}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    entity := rr.Body.String()
+    if entity != "bar" {
+        t.Errorf("entity is `%s`", entity)
     }
 }
 
@@ -484,6 +559,33 @@ func TestRedirects(t *testing.T) {
     location = rr.Header().Get("Location")
     if location != "/seeother" {
         t.Errorf("location is `%s`", location)
+    }
+}
+
+type Forbid struct {
+    Ctx
+}
+
+func (c Forbid) Get() interface{} {
+    return c.Forbidden()
+}
+
+func TestForbidden(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/forbid",
+        },
+    }
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/forbid", Forbid{}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusForbidden {
+        t.Errorf("response code is %d", rr.Code)
     }
 }
 
