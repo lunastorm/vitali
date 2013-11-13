@@ -4,9 +4,30 @@ import (
     "fmt"
     "strings"
     "net/http"
+    "encoding/xml"
+    "encoding/json"
 )
 
-func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interface{}) {
+func marshalOutput(input interface{}, contentType MediaType) string {
+    switch contentType {
+    case "application/json":
+        j, err := json.Marshal(input)
+        if err != nil {
+            panic(err)
+        }
+        return string(j)
+    case "application/xml":
+        x, err := xml.Marshal(input)
+        if err != nil {
+            panic(err)
+        }
+        return string(x)
+    default:
+        return fmt.Sprintf("%s", input)
+    }
+}
+
+func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interface{}, chosenType MediaType) {
     switch v := response.(type) {
     case noContent:
         w.WriteHeader(http.StatusNoContent)
@@ -67,6 +88,10 @@ func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interf
     case clientGone:
     default:
         w.WriteHeader(http.StatusOK)
-        fmt.Fprintf(w, "%s", v)
+        if chosenType != "" {
+            fmt.Fprintf(w, "%s", marshalOutput(v, chosenType))
+        } else {
+            fmt.Fprintf(w, "%s", v)
+        }
     }
 }

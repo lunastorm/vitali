@@ -8,8 +8,6 @@ import (
     "strconv"
     "net/http"
     "net/http/httputil"
-    "encoding/xml"
-    "encoding/json"
     "html/template"
     "time"
     "regexp"
@@ -105,7 +103,7 @@ func chooseType(provided MediaTypes, acceptHeader string) MediaType {
     return ""
 }
 
-func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{}) {
+func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{}, chosenType MediaType) {
     for i, routeRule := range c.RouteRules {
         params := c.PatternMappings[i].Re.FindStringSubmatch(r.URL.Path)
         if params != nil {
@@ -130,7 +128,7 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                 if len(provided) > 0 {
                     ctx.ChosenType = chooseType(provided, r.Header.Get("Accept"))
                     if ctx.ChosenType == "" {
-                        return notAcceptable{vProvides.Interface().(Provides)[Method(r.Method)]}
+                        return notAcceptable{vProvides.Interface().(Provides)[Method(r.Method)]}, ""
                     }
                     w.Header().Set("Content-Type", string(ctx.ChosenType))
                 }
@@ -159,12 +157,12 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                         } else {
                             http.Error(w, "unauthorized", http.StatusUnauthorized)
                         }
-                        return w
+                        return w, ""
                     }
                 case "Accept":
                     if !checkMediaType(srcField.Interface().(Accept), Method(r.Method),
                             MediaType(r.Header.Get("Content-Type"))) {
-                        return unsupportedMediaType{}
+                        return unsupportedMediaType{}, ""
                     }
                 default:
                     newField.Set(srcField)
@@ -173,34 +171,10 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
             resource := vNewResource.Interface()
 
             result := getResult(r.Method, resource)
-            if ctx.ChosenType != "" {
-                return marshalOutput(result, ctx.ChosenType)
-            } else {
-                return result
-            }
+            return result, ctx.ChosenType
         }
     }
-    return notFound{}
-}
-
-func marshalOutput(input interface{}, contentType MediaType) string {
-    switch contentType {
-    case "application/json":
-        j, err := json.Marshal(input)
-        if err != nil {
-            panic(err)
-        }
-        return string(j)
-    case "application/xml":
-        log.Printf("here")
-        x, err := xml.Marshal(input)
-        if err != nil {
-            panic(err)
-        }
-        return string(x)
-    default:
-        return fmt.Sprintf("%s", input)
-    }
+    return notFound{}, ""
 }
 
 func getAllowed(resource interface{}) (allowed []string) {
@@ -297,8 +271,8 @@ func (c webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         inTime: time.Now(),
     }
     r.ParseForm()
-    result := c.matchRules(ww, r)
-    c.writeResponse(ww, r, result)
+    result, chosenType := c.matchRules(ww, r)
+    c.writeResponse(ww, r, result, chosenType)
 
     elapsedMs := float64(time.Now().UnixNano() - ww.inTime.UnixNano()) / 1000000
     c.logRequest(ww, r, elapsedMs, result)
