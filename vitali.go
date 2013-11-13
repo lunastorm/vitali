@@ -8,6 +8,8 @@ import (
     "strconv"
     "net/http"
     "net/http/httputil"
+    "encoding/xml"
+    "encoding/json"
     "html/template"
     "time"
     "regexp"
@@ -171,10 +173,34 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
             resource := vNewResource.Interface()
 
             result := getResult(r.Method, resource)
-            return result
+            if ctx.ChosenType != "" {
+                return marshalOutput(result, ctx.ChosenType)
+            } else {
+                return result
+            }
         }
     }
     return notFound{}
+}
+
+func marshalOutput(input interface{}, contentType MediaType) string {
+    switch contentType {
+    case "application/json":
+        j, err := json.Marshal(input)
+        if err != nil {
+            panic(err)
+        }
+        return string(j)
+    case "application/xml":
+        log.Printf("here")
+        x, err := xml.Marshal(input)
+        if err != nil {
+            panic(err)
+        }
+        return string(x)
+    default:
+        return fmt.Sprintf("%s", input)
+    }
 }
 
 func getAllowed(resource interface{}) (allowed []string) {
