@@ -145,9 +145,9 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                 case "Perm":
                     if !checkPermission(srcField.Interface().(Perm), Method(r.Method),
                             ctx.Username) {
+                        w.Header()["WWW-Authenticate"] = []string{c.UserProvider.AuthHeader(r)}
                         if c.Settings["401_PAGE"] != "" {
                             w.Header().Set("Content-Type", "text/html")
-                            w.Header()["WWW-Authenticate"] = []string{c.UserProvider.AuthHeader(r)}
                             w.WriteHeader(http.StatusUnauthorized)
                             f, err := os.Open(c.Settings["401_PAGE"])
                             if err != nil {
