@@ -14,7 +14,7 @@ func errorCode(msg string) uint32 {
 func lineInfo(skip int) (where string) {
     _, fn, ln, ok := runtime.Caller(skip)
     if ok {
-        where = fmt.Sprintf("%s:%d", strings.SplitN(fn, "/src/", 2)[1], ln)
+        where = fmt.Sprintf("%s:%d", fn, ln)
     }
     return
 }
