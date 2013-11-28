@@ -35,6 +35,14 @@ func (c Ctx) BadRequest(reason string) badRequest {
     return badRequest{reason}
 }
 
+// 401
+type unauthorized struct {
+}
+
+func (c Ctx) Unauthorized() unauthorized {
+    return unauthorized{}
+}
+
 // 403
 type forbidden struct {
 }
