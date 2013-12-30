@@ -340,7 +340,7 @@ func TestHeader(t *testing.T) {
 
 type NeedAuth struct {
     Ctx
-    Perm
+    Perm `GET:"authed" DELETE:"authed"`
 }
 
 func (c NeedAuth) Get() interface{} {
@@ -365,9 +365,7 @@ func TestNeedAuth(t *testing.T) {
     }
     rr := httptest.NewRecorder()
     webapp := CreateWebApp([]RouteRule{
-        {"/needauth", NeedAuth{
-            Perm: Perm{"GET": AUTHENTICATED, "POST": PUBLIC, "*": AUTHENTICATED},
-        }},
+        {"/needauth", NeedAuth{}},
     })
     webapp.ServeHTTP(rr, r)
     if rr.Code != http.StatusUnauthorized {
@@ -396,8 +394,8 @@ func TestNeedAuth(t *testing.T) {
 type Auther struct {
 }
 
-func (c Auther) User(r *http.Request) string {
-    return "bob"
+func (c Auther) GetUserAndRole(r *http.Request) (string, string) {
+    return "bob", "authed"
 }
 
 func (c Auther) AuthHeader(r *http.Request) string {
@@ -414,9 +412,7 @@ func TestAuthed(t *testing.T) {
     }
     rr := httptest.NewRecorder()
     webapp := CreateWebApp([]RouteRule{
-        {"/needauth", NeedAuth{
-            Perm: Perm{"GET": AUTHENTICATED, "POST": PUBLIC, "*": AUTHENTICATED},
-        }},
+        {"/needauth", NeedAuth{}},
     })
     webapp.UserProvider = Auther{}
     webapp.ServeHTTP(rr, r)

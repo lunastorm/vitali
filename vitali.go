@@ -15,11 +15,6 @@ import (
     "reflect"
 )
 
-const (
-    PUBLIC = iota
-    AUTHENTICATED
-)
-
 type RouteRule struct {
     Pattern string
     Resource interface{}
@@ -39,12 +34,15 @@ type webApp struct {
     ErrTemplate *template.Template
 }
 
-func checkPermission(perm Perm, method Method, user string) bool {
-    required, exist := perm[method]
-    if !exist {
-        required = perm["*"]
+func checkPermission(perm reflect.StructTag, method Method, role string) bool {
+    requiredRole := perm.Get(string(method))
+    if requiredRole == "" {
+        requiredRole = perm.Get("*")
     }
-    return !(required==AUTHENTICATED && user == "")
+    if requiredRole == "" {
+        return true
+    }
+    return role == requiredRole
 }
 
 func checkMediaType(accept Accept, method Method, mediaType MediaType) bool {
@@ -114,9 +112,11 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                 }
             }
 
+            user, role := c.UserProvider.GetUserAndRole(r)
             ctx := Ctx {
                 pathParams: pathParams,
-                Username: c.UserProvider.User(r),
+                Username: user,
+                Role: role,
                 Request: r,
                 ResponseWriter: w,
             }
@@ -143,8 +143,8 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                 case "Ctx":
                     newField.Set(reflect.ValueOf(ctx))
                 case "Perm":
-                    if !checkPermission(srcField.Interface().(Perm), Method(r.Method),
-                            ctx.Username) {
+                    if !checkPermission(vResource.Type().Field(i).Tag, Method(r.Method),
+                            ctx.Role) {
                         w.Header()["WWW-Authenticate"] = []string{c.UserProvider.AuthHeader(r)}
                         if c.Settings["401_PAGE"] != "" {
                             w.Header().Set("Content-Type", "text/html")
@@ -302,7 +302,7 @@ func CreateWebApp(rules []RouteRule) webApp {
 }
 
 type Method string
-type Perm map[Method]int
+type Perm struct{}
 
 type MediaType string
 type MediaTypes []MediaType

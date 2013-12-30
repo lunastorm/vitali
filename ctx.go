@@ -6,6 +6,7 @@ import (
 
 type Ctx struct {
     Username    string
+    Role        string
     Request *http.Request
     ResponseWriter  http.ResponseWriter
     ChosenType  MediaType
