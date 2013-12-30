@@ -456,28 +456,26 @@ func TestBadRequest(t *testing.T) {
     }
 }
 
-type AcceptSomething struct {
+type ConsumeSomething struct {
     Ctx
-    Accept
+    Consumes `POST:"application/json,application/xml"`
 }
 
-func (c AcceptSomething) Post() interface{} {
+func (c ConsumeSomething) Post() interface{} {
     return "success"
 }
 
-func TestAccept(t *testing.T) {
+func TestConsume(t *testing.T) {
     r := &http.Request{
         Method: "POST",
         Host:   "lunastorm.tw",
         URL: &url.URL{
-            Path: "/accept",
+            Path: "/consume",
         },
         Header: make(http.Header),
     }
     webapp := CreateWebApp([]RouteRule{
-        {"/accept", AcceptSomething{
-            Accept: Accept{"POST": MediaTypes{"application/json", "application/xml"}},
-        }},
+        {"/consume", ConsumeSomething{}},
     })
 
     rr := httptest.NewRecorder()

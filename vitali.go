@@ -45,13 +45,13 @@ func checkPermission(perm reflect.StructTag, method Method, role string) bool {
     return role == requiredRole
 }
 
-func checkMediaType(accept Accept, method Method, mediaType MediaType) bool {
-    acceptedTypes, exist := accept[method]
-    if !exist {
+func checkMediaType(consumes reflect.StructTag, method Method, mediaType MediaType) bool {
+    acceptedTypes := consumes.Get(string(method))
+    if acceptedTypes == "" {
         return true
     }
-    for _, acceptedType := range acceptedTypes {
-        if mediaType == acceptedType {
+    for _, acceptedType := range strings.Split(acceptedTypes, ",") {
+        if mediaType == MediaType(acceptedType) {
             return true
         }
     }
@@ -165,8 +165,8 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                         }
                         return w, ""
                     }
-                case "Accept":
-                    if !checkMediaType(srcField.Interface().(Accept), Method(r.Method),
+                case "Consumes":
+                    if !checkMediaType(vResource.Type().Field(i).Tag, Method(r.Method),
                             MediaType(r.Header.Get("Content-Type"))) {
                         return unsupportedMediaType{}, ""
                     }
@@ -309,8 +309,8 @@ func CreateWebApp(rules []RouteRule) webApp {
 
 type Method string
 type Perm struct{}
+type Provides struct{}
+type Consumes struct{}
 
 type MediaType string
 type MediaTypes []MediaType
-type Accept map[Method]MediaTypes
-type Provides map[Method]MediaTypes
