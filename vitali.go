@@ -122,13 +122,19 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
             }
 
             vResource := reflect.ValueOf(routeRule.Resource)
-            vProvides := vResource.FieldByName("Provides")
-            if vProvides.IsValid() {
-                provided := vProvides.Interface().(Provides)[Method(r.Method)]
-                if len(provided) > 0 {
-                    ctx.ChosenType = chooseType(provided, r.Header.Get("Accept"))
+            tProvides, found := reflect.TypeOf(routeRule.Resource).FieldByName("Provides")
+            if found {
+                providedStr := tProvides.Tag.Get(r.Method)
+                if providedStr != "" {
+                    providedTmp := strings.Split(providedStr, ",")
+                    provided := make(MediaTypes, len(providedTmp))
+                    for i, v := range providedTmp {
+                        provided[i] = MediaType(v)
+                    }
+
+                    ctx.ChosenType = MediaType(chooseType(provided, r.Header.Get("Accept")))
                     if ctx.ChosenType == "" {
-                        return notAcceptable{vProvides.Interface().(Provides)[Method(r.Method)]}, ""
+                        return notAcceptable{provided}, ""
                     }
                     w.Header().Set("Content-Type", string(ctx.ChosenType))
                 }
