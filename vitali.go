@@ -42,8 +42,13 @@ func checkPermission(perm reflect.StructTag, method Method, roles Roles) bool {
     if requiredRole == "" {
         return true
     }
-    _, exists := roles[requiredRole]
-    return exists
+    for _, r := range(strings.Split(requiredRole, "|")) {
+        _, exists := roles[r]
+        if exists {
+            return true
+        }
+    }
+    return false
 }
 
 func checkMediaType(consumes reflect.StructTag, method Method, mediaType MediaType) bool {
@@ -165,7 +170,10 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
             resource := vNewResource.Interface()
             h, ok := resource.(PreHooker)
             if ok {
-                h.Pre()
+                res := h.Pre()
+                if res != nil {
+                    return res, ctx.ChosenType
+                }
             }
             if PermTag != "" {
                if !checkPermission(PermTag, Method(r.Method),

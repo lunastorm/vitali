@@ -17,5 +17,5 @@ type Deleter interface {
 }
 
 type PreHooker interface {
-    Pre()
+    Pre() interface{}
 }
