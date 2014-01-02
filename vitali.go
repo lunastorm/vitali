@@ -34,7 +34,7 @@ type webApp struct {
     ErrTemplate *template.Template
 }
 
-func checkPermission(perm reflect.StructTag, method Method, role string) bool {
+func checkPermission(perm reflect.StructTag, method Method, roles Roles) bool {
     requiredRole := perm.Get(string(method))
     if requiredRole == "" {
         requiredRole = perm.Get("*")
@@ -42,7 +42,8 @@ func checkPermission(perm reflect.StructTag, method Method, role string) bool {
     if requiredRole == "" {
         return true
     }
-    return role == requiredRole
+    _, exists := roles[requiredRole]
+    return exists
 }
 
 func checkMediaType(consumes reflect.StructTag, method Method, mediaType MediaType) bool {
@@ -116,10 +117,11 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
             ctx := Ctx {
                 pathParams: pathParams,
                 Username: user,
-                Role: role,
+                Roles: make(Roles),
                 Request: r,
                 ResponseWriter: w,
             }
+            ctx.Roles[role] = struct{}{}
 
             vResource := reflect.ValueOf(routeRule.Resource)
             tProvides, found := reflect.TypeOf(routeRule.Resource).FieldByName("Provides")
@@ -141,6 +143,7 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
             }
 
             vNewResource := reflect.New(reflect.TypeOf(routeRule.Resource)).Elem()
+            var PermTag reflect.StructTag
             for i := 0; i < vResource.NumField(); i++ {
                 srcField := vResource.Field(i)
                 newField := vNewResource.Field(i)
@@ -149,22 +152,7 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                 case "Ctx":
                     newField.Set(reflect.ValueOf(ctx))
                 case "Perm":
-                    if !checkPermission(vResource.Type().Field(i).Tag, Method(r.Method),
-                            ctx.Role) {
-                        w.Header()["WWW-Authenticate"] = []string{c.UserProvider.AuthHeader(r)}
-                        if c.Settings["401_PAGE"] != "" {
-                            w.Header().Set("Content-Type", "text/html")
-                            w.WriteHeader(http.StatusUnauthorized)
-                            f, err := os.Open(c.Settings["401_PAGE"])
-                            if err != nil {
-                                panic(err)
-                            }
-                            io.Copy(w, f)
-                        } else {
-                            http.Error(w, "unauthorized", http.StatusUnauthorized)
-                        }
-                        return w, ""
-                    }
+                    PermTag = vResource.Type().Field(i).Tag
                 case "Consumes":
                     if !checkMediaType(vResource.Type().Field(i).Tag, Method(r.Method),
                             MediaType(r.Header.Get("Content-Type"))) {
@@ -175,6 +163,28 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                 }
             }
             resource := vNewResource.Interface()
+            h, ok := resource.(PreHooker)
+            if ok {
+                h.Pre()
+            }
+            if PermTag != "" {
+               if !checkPermission(PermTag, Method(r.Method),
+                       ctx.Roles) {
+                   w.Header()["WWW-Authenticate"] = []string{c.UserProvider.AuthHeader(r)}
+                   if c.Settings["401_PAGE"] != "" {
+                       w.Header().Set("Content-Type", "text/html")
+                       w.WriteHeader(http.StatusUnauthorized)
+                       f, err := os.Open(c.Settings["401_PAGE"])
+                       if err != nil {
+                           panic(err)
+                       }
+                       io.Copy(w, f)
+                   } else {
+                       http.Error(w, "unauthorized", http.StatusUnauthorized)
+                   }
+                   return w, ""
+               }
+            }
 
             result := getResult(r.Method, resource)
             return result, ctx.ChosenType
@@ -314,3 +324,8 @@ type Consumes struct{}
 
 type MediaType string
 type MediaTypes []MediaType
+type Roles map[string]struct{}
+
+func (c Roles) Add(role string) {
+    c[role] = struct{}{}
+}

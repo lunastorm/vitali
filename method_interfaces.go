@@ -15,3 +15,7 @@ type Putter interface {
 type Deleter interface {
     Delete() interface{}
 }
+
+type PreHooker interface {
+    Pre()
+}
