@@ -8,26 +8,28 @@ import (
     "encoding/json"
 )
 
-func marshalOutput(input interface{}, contentType MediaType) string {
+func (c webApp) marshalOutput(w *wrappedWriter, input interface{}, contentType MediaType, templateName string) {
     switch contentType {
     case "application/json":
         j, err := json.Marshal(input)
         if err != nil {
             panic(err)
         }
-        return string(j)
+        fmt.Fprintf(w, "%s", string(j))
     case "application/xml":
         x, err := xml.Marshal(input)
         if err != nil {
             panic(err)
         }
-        return string(x)
+        fmt.Fprintf(w, "%s", string(x))
+    case "text/html":
+        c.views[templateName].Execute(w, input)
     default:
-        return fmt.Sprintf("%s", input)
+        fmt.Fprintf(w, "%s", input)
     }
 }
 
-func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interface{}, chosenType MediaType) {
+func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interface{}, chosenType MediaType, templateName string) {
     switch v := response.(type) {
     case noContent:
         w.WriteHeader(http.StatusNoContent)
@@ -91,7 +93,7 @@ func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interf
     default:
         w.WriteHeader(http.StatusOK)
         if chosenType != "" {
-            fmt.Fprintf(w, "%s", marshalOutput(v, chosenType))
+            c.marshalOutput(w, v, chosenType, templateName)
         } else {
             fmt.Fprintf(w, "%s", v)
         }

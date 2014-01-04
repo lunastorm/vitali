@@ -7,6 +7,13 @@ import (
     "hash/crc32"
 )
 
+func panicOnErr(res interface{}, e error) interface{} {
+    if e != nil {
+        panic(e)
+    }   
+    return res 
+}
+
 func errorCode(msg string) uint32 {
     return crc32.ChecksumIEEE([]byte(msg))
 }

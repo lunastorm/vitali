@@ -8,6 +8,7 @@ import (
     "strconv"
     "net/http"
     "net/http/httputil"
+    "io/ioutil"
     "html/template"
     "time"
     "regexp"
@@ -32,6 +33,7 @@ type webApp struct {
     Settings map[string]string
     DumpRequest bool
     ErrTemplate *template.Template
+    views map[string]*template.Template
 }
 
 func checkPermission(perm reflect.StructTag, method Method, roles Roles) bool {
@@ -107,7 +109,7 @@ func chooseType(provided MediaTypes, acceptHeader string) MediaType {
     return ""
 }
 
-func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{}, chosenType MediaType) {
+func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{}, chosenType MediaType, viewName string) {
     for i, routeRule := range c.RouteRules {
         params := c.PatternMappings[i].Re.FindStringSubmatch(r.URL.Path)
         if params != nil {
@@ -140,8 +142,10 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                     }
 
                     ctx.ChosenType = MediaType(chooseType(provided, r.Header.Get("Accept")))
-                    if ctx.ChosenType == "" {
-                        return notAcceptable{provided}, ""
+                    chosenType = ctx.ChosenType
+                    if chosenType == "" {
+                        result = notAcceptable{provided}
+                        return
                     }
                     w.Header().Set("Content-Type", string(ctx.ChosenType))
                 }
@@ -161,8 +165,11 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                 case "Consumes":
                     if !checkMediaType(vResource.Type().Field(i).Tag, Method(r.Method),
                             MediaType(r.Header.Get("Content-Type"))) {
-                        return unsupportedMediaType{}, ""
+                        result = unsupportedMediaType{}
+                        return
                     }
+                case "Views":
+                    viewName = vResource.Type().Field(i).Tag.Get(r.Method)
                 default:
                     newField.Set(srcField)
                 }
@@ -170,9 +177,9 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
             resource := vNewResource.Interface()
             h, ok := resource.(PreHooker)
             if ok {
-                res := h.Pre()
-                if res != nil {
-                    return res, ctx.ChosenType
+                result = h.Pre()
+                if result != nil {
+                    return
                 }
             }
             if PermTag != "" {
@@ -190,15 +197,17 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                    } else {
                        http.Error(w, "unauthorized", http.StatusUnauthorized)
                    }
-                   return w, ""
+                   result = w
+                   return
                }
             }
 
-            result := getResult(r.Method, resource)
-            return result, ctx.ChosenType
+            result = getResult(r.Method, resource)
+            return
         }
     }
-    return notFound{}, ""
+    result = notFound{}
+    return
 }
 
 func getAllowed(resource interface{}) (allowed []string) {
@@ -295,8 +304,8 @@ func (c webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         inTime: time.Now(),
     }
     r.ParseForm()
-    result, chosenType := c.matchRules(ww, r)
-    c.writeResponse(ww, r, result, chosenType)
+    result, chosenType, templateName := c.matchRules(ww, r)
+    c.writeResponse(ww, r, result, chosenType, templateName)
 
     elapsedMs := float64(time.Now().UnixNano() - ww.inTime.UnixNano()) / 1000000
     c.logRequest(ww, r, elapsedMs, result)
@@ -304,6 +313,7 @@ func (c webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func CreateWebApp(rules []RouteRule) webApp {
     patternMappings := make([]PatternMapping, len(rules))
+    views := make(map[string]*template.Template)
     for i, v := range rules {
         re := regexp.MustCompile("/{[^}]*}")
         params := re.FindAllString(v.Pattern, -1)
@@ -315,6 +325,21 @@ func CreateWebApp(rules []RouteRule) webApp {
             transformedPattern = strings.Replace(transformedPattern, param, "[/]{0,1}([^/]*)", -1)
         }
         patternMappings[i] = PatternMapping{regexp.MustCompile("^"+transformedPattern+"$"), names}
+
+        tViews, ok := reflect.TypeOf(v.Resource).FieldByName("Views")
+        if ok {
+            for _, kv := range(strings.Split(string(tViews.Tag), " ")) {
+                vStr := strings.Split(kv, ":")[1]
+                templatesName := vStr[1:len(vStr)-1]
+                
+                temp := template.New(templatesName)
+                for _, t := range(strings.Split(templatesName, ",")) {
+                    content := panicOnErr(ioutil.ReadFile(fmt.Sprintf("./views/%s", t))).([]uint8)
+                    template.Must(temp.Parse(string(content)))
+                }
+                views[templatesName] = temp
+            }
+        }
     }
 
     return webApp{
@@ -322,6 +347,7 @@ func CreateWebApp(rules []RouteRule) webApp {
         PatternMappings: patternMappings,
         UserProvider: EmptyUserProvider{},
         Settings: make(map[string]string),
+        views: views,
     }
 }
 
@@ -329,6 +355,7 @@ type Method string
 type Perm struct{}
 type Provides struct{}
 type Consumes struct{}
+type Views struct{}
 
 type MediaType string
 type MediaTypes []MediaType
