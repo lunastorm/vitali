@@ -11,17 +11,9 @@ import (
 func (c webApp) marshalOutput(w *wrappedWriter, input interface{}, contentType MediaType, templateName string) {
     switch contentType {
     case "application/json":
-        j, err := json.Marshal(input)
-        if err != nil {
-            panic(err)
-        }
-        fmt.Fprintf(w, "%s", string(j))
+        fmt.Fprintf(w, "%s", string(panicOnErr(json.Marshal(input)).([]byte)))
     case "application/xml":
-        x, err := xml.Marshal(input)
-        if err != nil {
-            panic(err)
-        }
-        fmt.Fprintf(w, "%s", string(x))
+        fmt.Fprintf(w, "%s", string(panicOnErr(xml.Marshal(input)).([]byte)))
     case "text/html":
         c.views[templateName].Execute(w, input)
     default:

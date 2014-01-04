@@ -189,10 +189,8 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                    if c.Settings["401_PAGE"] != "" {
                        w.Header().Set("Content-Type", "text/html")
                        w.WriteHeader(http.StatusUnauthorized)
-                       f, err := os.Open(c.Settings["401_PAGE"])
-                       if err != nil {
-                           panic(err)
-                       }
+                       f := panicOnErr(os.Open(c.Settings["401_PAGE"])).(*os.File)
+                       defer f.Close()
                        io.Copy(w, f)
                    } else {
                        http.Error(w, "unauthorized", http.StatusUnauthorized)
