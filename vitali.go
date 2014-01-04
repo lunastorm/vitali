@@ -130,6 +130,11 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
             }
             ctx.Roles[role] = struct{}{}
 
+            contentType := r.Header.Get("Content-Type") 
+            if contentType != "" {
+                ctx.ContentType = MediaType(strings.Split(contentType, ";")[0])
+            }
+
             vResource := reflect.ValueOf(routeRule.Resource)
             tProvides, found := reflect.TypeOf(routeRule.Resource).FieldByName("Provides")
             if found {
@@ -164,7 +169,7 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                     PermTag = vResource.Type().Field(i).Tag
                 case "Consumes":
                     if !checkMediaType(vResource.Type().Field(i).Tag, Method(r.Method),
-                            MediaType(r.Header.Get("Content-Type"))) {
+                            MediaType(ctx.ContentType)) {
                         result = unsupportedMediaType{}
                         return
                     }
