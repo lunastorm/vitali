@@ -4,7 +4,7 @@ package vitali
 type  noContent struct {
 }
 
-func (c Ctx) NoContent() noContent {
+func (c *Ctx) NoContent() noContent {
     return noContent{}
 }
 
@@ -13,7 +13,7 @@ type found struct {
     uri string
 }
 
-func (c Ctx) Found(uri string) found {
+func (c *Ctx) Found(uri string) found {
     return found{uri}
 }
 
@@ -22,7 +22,7 @@ type seeOther struct {
     uri string
 }
 
-func (c Ctx) SeeOther(uri string) seeOther {
+func (c *Ctx) SeeOther(uri string) seeOther {
     return seeOther{uri}
 }
 
@@ -31,7 +31,7 @@ type badRequest struct {
     reason string
 }
 
-func (c Ctx) BadRequest(reason string) badRequest {
+func (c *Ctx) BadRequest(reason string) badRequest {
     return badRequest{reason}
 }
 
@@ -39,7 +39,7 @@ func (c Ctx) BadRequest(reason string) badRequest {
 type unauthorized struct {
 }
 
-func (c Ctx) Unauthorized() unauthorized {
+func (c *Ctx) Unauthorized() unauthorized {
     return unauthorized{}
 }
 
@@ -47,7 +47,7 @@ func (c Ctx) Unauthorized() unauthorized {
 type forbidden struct {
 }
 
-func (c Ctx) Forbidden() forbidden {
+func (c *Ctx) Forbidden() forbidden {
     return forbidden{}
 }
 
@@ -55,7 +55,7 @@ func (c Ctx) Forbidden() forbidden {
 type notFound struct {
 }
 
-func (c Ctx) NotFound() notFound {
+func (c *Ctx) NotFound() notFound {
     return notFound{}
 }
 
@@ -64,7 +64,7 @@ type methodNotAllowed struct {
     allowed []string
 }
 
-func (c Ctx) MethodNotAllowed(allowed []string) methodNotAllowed {
+func (c *Ctx) MethodNotAllowed(allowed []string) methodNotAllowed {
     return methodNotAllowed{allowed}
 }
 
@@ -73,7 +73,7 @@ type notAcceptable struct {
     provided MediaTypes
 }
 
-func (c Ctx) NotAcceptable(provided MediaTypes) notAcceptable {
+func (c *Ctx) NotAcceptable(provided MediaTypes) notAcceptable {
     return notAcceptable{provided}
 }
 
@@ -81,7 +81,7 @@ func (c Ctx) NotAcceptable(provided MediaTypes) notAcceptable {
 type unsupportedMediaType struct {
 }
 
-func (c Ctx) UnsupportedMediaType() unsupportedMediaType {
+func (c *Ctx) UnsupportedMediaType() unsupportedMediaType {
     return unsupportedMediaType{}
 }
 
@@ -89,7 +89,7 @@ func (c Ctx) UnsupportedMediaType() unsupportedMediaType {
 type notImplemented struct {
 }
 
-func (c Ctx) NotImplemented() notImplemented {
+func (c *Ctx) NotImplemented() notImplemented {
     return notImplemented{}
 }
 
@@ -97,7 +97,7 @@ func (c Ctx) NotImplemented() notImplemented {
 type clientGone struct {
 }
 
-func (c Ctx) ClientGone() clientGone {
+func (c *Ctx) ClientGone() clientGone {
     return clientGone{}
 }
 
@@ -108,7 +108,7 @@ type internalError struct {
     code uint32
 }
 
-func (c Ctx) InternalError(e error) internalError {
+func (c *Ctx) InternalError(e error) internalError {
     return internalError {
         where: lineInfo(1),
         why: e.Error(),
