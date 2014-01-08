@@ -175,27 +175,8 @@ func TestMethodNotAllowed(t *testing.T) {
         t.Errorf("response code is %d", rr.Code)
     }
     allowed := rr.HeaderMap.Get("Allow")
-    if allowed != "GET, HEAD" {
+    if allowed != "HEAD, GET" {
         t.Errorf("allow header is %s", allowed)
-    }
-}
-
-func TestNotImplemented(t *testing.T) {
-    r := &http.Request{
-        Method: "WTF",
-        Host:   "lunastorm.tw",
-        URL: &url.URL{
-            Path: "/",
-        },
-    }
-    rr := httptest.NewRecorder()
-    webapp := CreateWebApp([]RouteRule{
-        {"/", Root{}},
-    })
-    webapp.ServeHTTP(rr, r)
-
-    if rr.Code != http.StatusNotImplemented {
-        t.Errorf("response code is %d", rr.Code)
     }
 }
 

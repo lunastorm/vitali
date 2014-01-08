@@ -156,7 +156,8 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                 }
             }
 
-            vNewResource := reflect.New(reflect.TypeOf(routeRule.Resource)).Elem()
+            vNewResourcePtr := reflect.New(reflect.TypeOf(routeRule.Resource))
+            vNewResource := vNewResourcePtr.Elem()
             var PermTag reflect.StructTag
             for i := 0; i < vResource.NumField(); i++ {
                 srcField := vResource.Field(i)
@@ -179,13 +180,10 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                     newField.Set(srcField)
                 }
             }
-            resource := vNewResource.Interface()
-            h, ok := resource.(PreHooker)
-            if ok {
-                result = h.Pre()
-                if result != nil {
-                    return
-                }
+
+            vPreFunc := vNewResourcePtr.MethodByName("Pre")
+            if vPreFunc.IsValid() {
+                vPreFunc.Call([]reflect.Value{})[0].Interface()
             }
             if PermTag != "" {
                if !checkPermission(PermTag, Method(r.Method),
@@ -205,7 +203,7 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                }
             }
 
-            result = getResult(r.Method, resource)
+            result = getResult(r.Method, &vNewResourcePtr)
             return
         }
     }
@@ -213,27 +211,22 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
     return
 }
 
-func getAllowed(resource interface{}) (allowed []string) {
-    _, ok := resource.(Getter)
-    if ok {
-        allowed = append(allowed, "GET", "HEAD")
-    }
-    _, ok = resource.(Poster)
-    if ok {
-        allowed = append(allowed, "POST")
-    }
-    _, ok = resource.(Putter)
-    if ok {
-        allowed = append(allowed, "PUT")
-    }
-    _, ok = resource.(Deleter)
-    if ok {
-        allowed = append(allowed, "DELETE")
+func getAllowed(vResourcePtr *reflect.Value) (allowed []string) {
+    for i:=0; i<vResourcePtr.NumMethod(); i++ {
+        method := vResourcePtr.Type().Method(i)
+        if method.Type.NumIn()==1 && method.Type.NumOut()==1 && method.Type.Out(0).Name() == "" && method.Name != "Pre" {
+            if method.Name == "Get" {
+                allowed = append(allowed, "HEAD")
+                allowed = append(allowed, "GET")
+            } else {
+                allowed = append(allowed, strings.ToUpper(method.Name))
+            }
+        }
     }
     return
 }
 
-func getResult(method string, resource interface{}) (result interface{}) {
+func getResult(method string, vResourcePtr *reflect.Value) (result interface{}) {
     defer func() {
         if r := recover(); r != nil {
             rstr := fmt.Sprintf("%s", r)
@@ -245,33 +238,13 @@ func getResult(method string, resource interface{}) (result interface{}) {
         }
     }()
 
-    switch method {
-    case "HEAD", "GET":
-        h, ok := resource.(Getter)
-        if ok {
-            result = h.Get()
-        }
-    case "POST":
-        h, ok := resource.(Poster)
-        if ok {
-            result = h.Post()
-        }
-    case "PUT":
-        h, ok := resource.(Putter)
-        if ok {
-            result = h.Put()
-        }
-    case "DELETE":
-        h, ok := resource.(Deleter)
-        if ok {
-            result = h.Delete()
-        }
-    default:
-        return notImplemented{}
+    vMethod := vResourcePtr.MethodByName(strings.Title(strings.ToLower(method)))
+    if vMethod.IsValid() {
+        result = vMethod.Call([]reflect.Value{})[0].Interface()
     }
 
     if result == nil {
-        return methodNotAllowed{getAllowed(resource)}
+        return methodNotAllowed{getAllowed(vResourcePtr)}
     }
     return
 }
@@ -334,7 +307,7 @@ func CreateWebApp(rules []RouteRule) webApp {
             for _, kv := range(strings.Split(string(tViews.Tag), " ")) {
                 vStr := strings.Split(kv, ":")[1]
                 templatesName := vStr[1:len(vStr)-1]
-                
+
                 temp := template.New(templatesName)
                 for _, t := range(strings.Split(templatesName, ",")) {
                     content := panicOnErr(ioutil.ReadFile(fmt.Sprintf("./views/%s", t))).([]uint8)
