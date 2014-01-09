@@ -72,6 +72,11 @@ func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interf
         }
     case notImplemented:
         http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
+    case serviceUnavailable:
+        if v.seconds >= 0 {
+            w.Header().Set("Retry-After", fmt.Sprintf("%d", v.seconds))
+        }
+        http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
     case error:
         w.err = internalError{
             where: "",

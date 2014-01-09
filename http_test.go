@@ -595,3 +595,58 @@ func TestRecoverPanic(t *testing.T) {
         t.Errorf("response code is %d", rr.Code)
     }
 }
+
+type Unavailable struct {
+    Ctx
+    RetryIn int
+}
+
+func (c *Unavailable) Get() interface{} {
+    return c.ServiceUnavailable(c.RetryIn)
+}
+
+func TestServiceUnavailableWithRetry(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/unavail",
+        },
+    }
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/unavail", Unavailable{RetryIn: 60}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusServiceUnavailable {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    retryHeader := rr.HeaderMap.Get("Retry-After")
+    if retryHeader != "60" {
+        t.Errorf("retry header is %d", retryHeader)
+    }
+}
+
+func TestServiceUnavailableWithoutRetry(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/unavail",
+        },
+    }
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/unavail", Unavailable{RetryIn: -1}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusServiceUnavailable {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    retryHeader := rr.HeaderMap.Get("Retry-After")
+    if retryHeader != "" {
+        t.Errorf("retry header is %d", retryHeader)
+    }
+}

@@ -93,6 +93,15 @@ func (c *Ctx) NotImplemented() notImplemented {
     return notImplemented{}
 }
 
+// 503
+type serviceUnavailable struct {
+    seconds int
+}
+
+func (c *Ctx) ServiceUnavailable(seconds int) serviceUnavailable {
+    return serviceUnavailable{seconds}
+}
+
 // return this if client is disconnected
 type clientGone struct {
 }
