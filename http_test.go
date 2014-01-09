@@ -29,7 +29,11 @@ type Root struct {
     Ctx
 }
 
-func (c Root) Get() interface{} {
+func (c *Root) post() interface{} {
+    return ""
+}
+
+func (c *Root) Get() interface{} {
     return "root"
 }
 

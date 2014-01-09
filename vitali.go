@@ -214,7 +214,8 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
 func getAllowed(vResourcePtr *reflect.Value) (allowed []string) {
     for i:=0; i<vResourcePtr.NumMethod(); i++ {
         method := vResourcePtr.Type().Method(i)
-        if method.Type.NumIn()==1 && method.Type.NumOut()==1 && method.Type.Out(0).Name() == "" && method.Name != "Pre" {
+        if method.PkgPath == "" && method.Type.NumIn()==1 && method.Type.NumOut()==1 &&
+                method.Type.Out(0).Name() == "" && method.Name != "Pre"{
             if method.Name == "Get" {
                 allowed = append(allowed, "HEAD")
                 allowed = append(allowed, "GET")
