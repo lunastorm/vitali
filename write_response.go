@@ -1,6 +1,7 @@
 package vitali
 
 import (
+    "io"
     "fmt"
     "strings"
     "net/http"
@@ -85,6 +86,9 @@ func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interf
         }
         http.Error(w, fmt.Sprintf("%s: %d", http.StatusText(http.StatusInternalServerError),
             w.err.code), http.StatusInternalServerError)
+    case io.ReadCloser:
+        defer v.Close()
+        io.Copy(w, v)
     case http.ResponseWriter:
     case clientGone:
     default:
