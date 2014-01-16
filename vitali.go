@@ -183,7 +183,10 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
 
             vPreFunc := vNewResourcePtr.MethodByName("Pre")
             if vPreFunc.IsValid() {
-                vPreFunc.Call([]reflect.Value{})[0].Interface()
+                result = vPreFunc.Call([]reflect.Value{})[0].Interface()
+                if result != nil {
+                    return
+                }
             }
             if PermTag != "" {
                if !checkPermission(PermTag, Method(r.Method),

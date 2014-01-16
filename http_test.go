@@ -650,3 +650,61 @@ func TestServiceUnavailableWithoutRetry(t *testing.T) {
         t.Errorf("retry header is %d", retryHeader)
     }
 }
+
+type HasPre struct {
+    Ctx
+}
+
+func (c *HasPre) Pre() interface{} {
+    if c.PathParam("id") == "1" {
+        return nil
+    } else {
+        return c.NotFound()
+    }
+}
+
+func (c *HasPre) Get() interface{} {
+    return "haspre"
+}
+
+func TestHasPreOK(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/haspre/1",
+        },
+    }
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/haspre/{id}", HasPre{}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    entity := rr.Body.String()
+    if entity != "haspre" {
+        t.Errorf("wrong entity: %s", entity)
+    }
+}
+
+func TestHasPreEarlyReturn(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/haspre/2",
+        },
+    }
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/haspre/{id}", HasPre{}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusNotFound {
+        t.Errorf("response code is %d", rr.Code)
+    }
+}
