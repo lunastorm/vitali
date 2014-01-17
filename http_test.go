@@ -37,6 +37,10 @@ func (c *Root) Get() interface{} {
     return "root"
 }
 
+func (c *Root) Test() interface{} {
+    return "root"
+}
+
 func TestOK(t *testing.T) {
     r := &http.Request{
         Method: "GET",
@@ -179,7 +183,7 @@ func TestMethodNotAllowed(t *testing.T) {
         t.Errorf("response code is %d", rr.Code)
     }
     allowed := rr.HeaderMap.Get("Allow")
-    if allowed != "HEAD, GET" {
+    if allowed != "HEAD, GET, TEST" {
         t.Errorf("allow header is %s", allowed)
     }
 }
