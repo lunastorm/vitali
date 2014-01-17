@@ -446,8 +446,32 @@ type ConsumeSomething struct {
     Consumes `POST:"application/json,application/xml"`
 }
 
+func (c ConsumeSomething) Get() interface{} {
+    return "get"
+}
+
 func (c ConsumeSomething) Post() interface{} {
     return "success"
+}
+
+func TestNoConsume(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/consume",
+        },
+        Header: make(http.Header),
+    }
+    webapp := CreateWebApp([]RouteRule{
+        {"/consume", ConsumeSomething{}},
+    })
+
+    rr := httptest.NewRecorder()
+    webapp.ServeHTTP(rr, r)
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
 }
 
 func TestConsume(t *testing.T) {
