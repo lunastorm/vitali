@@ -1,8 +1,6 @@
 package vitali
 
 import (
-    "os"
-    "io"
     "log"
     "fmt"
     "strconv"
@@ -130,7 +128,7 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
             }
             ctx.Roles[role] = struct{}{}
 
-            contentType := r.Header.Get("Content-Type") 
+            contentType := r.Header.Get("Content-Type")
             if contentType != "" {
                 ctx.ContentType = MediaType(strings.Split(contentType, ";")[0])
             }
@@ -191,17 +189,11 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
             if PermTag != "" {
                if !checkPermission(PermTag, Method(r.Method),
                        ctx.Roles) {
-                   w.Header()["WWW-Authenticate"] = []string{c.UserProvider.AuthHeader(r)}
-                   if c.Settings["401_PAGE"] != "" {
-                       w.Header().Set("Content-Type", "text/html")
-                       w.WriteHeader(http.StatusUnauthorized)
-                       f := panicOnErr(os.Open(c.Settings["401_PAGE"])).(*os.File)
-                       defer f.Close()
-                       io.Copy(w, f)
+                   if user == "" {
+                       result = unauthorized{c.UserProvider.AuthHeader(r)}
                    } else {
-                       http.Error(w, "unauthorized", http.StatusUnauthorized)
+                       result = forbidden{}
                    }
-                   result = w
                    return
                }
             }

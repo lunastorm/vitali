@@ -37,10 +37,11 @@ func (c *Ctx) BadRequest(reason string) badRequest {
 
 // 401
 type unauthorized struct {
+    wwwAuthHeader string
 }
 
-func (c *Ctx) Unauthorized() unauthorized {
-    return unauthorized{}
+func (c *Ctx) Unauthorized(wwwAuthHeader string) unauthorized {
+    return unauthorized{wwwAuthHeader}
 }
 
 // 403

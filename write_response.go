@@ -2,6 +2,8 @@ package vitali
 
 import (
     "io"
+    "os"
+    "log"
     "fmt"
     "strings"
     "net/http"
@@ -41,7 +43,20 @@ func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interf
     case badRequest:
         http.Error(w, v.reason, http.StatusBadRequest)
     case unauthorized:
-        http.Error(w, "unauthorized", http.StatusUnauthorized)
+        w.Header()["WWW-Authenticate"] = []string{v.wwwAuthHeader}
+        if c.Settings["401_PAGE"] != "" && chosenType == "text/html" {
+            w.Header().Set("Content-Type", "text/html")
+            w.WriteHeader(http.StatusUnauthorized)
+            f, err := os.Open(c.Settings["401_PAGE"])
+            if err != nil {
+                log.Printf("open 401 page error: %s\n", err)
+                return
+            }
+            defer f.Close()
+            io.Copy(w, f)
+        } else {
+            http.Error(w, "unauthorized", http.StatusUnauthorized)
+        }
     case forbidden:
         http.Error(w, "Forbidden", http.StatusForbidden)
     case notFound:
