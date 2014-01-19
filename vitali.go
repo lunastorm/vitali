@@ -138,6 +138,7 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
             if found {
                 providedStr := tProvides.Tag.Get(r.Method)
                 if providedStr != "" {
+                    w.Header().Set("Vary", "Accept")
                     providedTmp := strings.Split(providedStr, ",")
                     provided := make(MediaTypes, len(providedTmp))
                     for i, v := range providedTmp {

@@ -45,6 +45,10 @@ func TestProviderJson(t *testing.T) {
     if entity != `{"foo":"bar"}` {
         t.Errorf("entity is `%s`", entity)
     }
+    vary := rr.Header().Get("Vary")
+    if vary != "Accept" {
+        t.Errorf("vary header is: %s", vary)
+    }
 }
 
 func TestProviderEmptyAccept(t *testing.T) {
@@ -69,6 +73,10 @@ func TestProviderEmptyAccept(t *testing.T) {
     entity := rr.Body.String()
     if entity != `{"foo":"bar"}` {
         t.Errorf("entity is `%s`", entity)
+    }
+    vary := rr.Header().Get("Vary")
+    if vary != "Accept" {
+        t.Errorf("vary header is: %s", vary)
     }
 }
 
@@ -96,6 +104,10 @@ func TestProviderAcceptAll(t *testing.T) {
     if entity != `{"foo":"bar"}` {
         t.Errorf("entity is `%s`", entity)
     }
+    vary := rr.Header().Get("Vary")
+    if vary != "Accept" {
+        t.Errorf("vary header is: %s", vary)
+    }
 }
 
 func TestProviderPartial(t *testing.T) {
@@ -121,6 +133,10 @@ func TestProviderPartial(t *testing.T) {
     entity := rr.Body.String()
     if entity != "foobar\n" {
         t.Errorf("entity is `%s`", entity)
+    }
+    vary := rr.Header().Get("Vary")
+    if vary != "Accept" {
+        t.Errorf("vary header is: %s", vary)
     }
 }
 
@@ -148,6 +164,10 @@ func TestProviderQ(t *testing.T) {
     if entity != `{"foo":"bar"}` {
         t.Errorf("entity is `%s`", entity)
     }
+    vary := rr.Header().Get("Vary")
+    if vary != "Accept" {
+        t.Errorf("vary header is: %s", vary)
+    }
 }
 
 func TestNotAcceptable(t *testing.T) {
@@ -169,5 +189,9 @@ func TestNotAcceptable(t *testing.T) {
 
     if rr.Code != http.StatusNotAcceptable {
         t.Errorf("response code is %d", rr.Code)
+    }
+    vary := rr.Header().Get("Vary")
+    if vary != "Accept" {
+        t.Errorf("vary header is: %s", vary)
     }
 }
