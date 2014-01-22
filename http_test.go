@@ -525,6 +525,8 @@ type Redirects struct {
 
 func (c Redirects) Get() interface{} {
     switch c.Param("type") {
+    case "moved":
+        return c.MovedPermanently("/moved")
     case "found":
         return c.Found("/found")
     case "seeother":
@@ -565,6 +567,17 @@ func TestRedirects(t *testing.T) {
     }
     location = rr.Header().Get("Location")
     if location != "/seeother" {
+        t.Errorf("location is `%s`", location)
+    }
+
+    r.Form.Set("type", "moved")
+    rr = httptest.NewRecorder()
+    webapp.ServeHTTP(rr, r)
+    if rr.Code != http.StatusMovedPermanently {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    location = rr.Header().Get("Location")
+    if location != "/moved" {
         t.Errorf("location is `%s`", location)
     }
 }

@@ -32,6 +32,10 @@ func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interf
         w.Header().Set("Content-Type", "text/html")
         w.WriteHeader(http.StatusOK)
         v.template.Execute(w, v.model)
+    case movedPermanently:
+        w.Header().Set("Location", v.uri)
+        w.WriteHeader(http.StatusMovedPermanently)
+        fmt.Fprintf(w, "%s\n", v.uri)
     case found:
         w.Header().Set("Location", v.uri)
         w.WriteHeader(http.StatusFound)

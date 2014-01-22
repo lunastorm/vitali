@@ -8,6 +8,15 @@ func (c *Ctx) NoContent() noContent {
     return noContent{}
 }
 
+//301
+type movedPermanently struct {
+    uri string
+}
+
+func (c *Ctx) MovedPermanently(uri string) movedPermanently {
+    return movedPermanently{uri}
+}
+
 // 302
 type found struct {
     uri string
