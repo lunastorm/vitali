@@ -107,11 +107,20 @@ func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interf
             w.err.code), http.StatusInternalServerError)
     case io.ReadCloser:
         defer v.Close()
+        if r.Header.Get("Range") != "" {
+            w.WriteHeader(http.StatusPartialContent)
+        } else {
+            w.WriteHeader(http.StatusOK)
+        }
         io.Copy(w, v)
     case http.ResponseWriter:
     case clientGone:
     default:
-        w.WriteHeader(http.StatusOK)
+        if r.Header.Get("Range") != "" {
+            w.WriteHeader(http.StatusPartialContent)
+        } else {
+            w.WriteHeader(http.StatusOK)
+        }
         if chosenType != "" {
             c.marshalOutput(w, v, chosenType, templateName)
         } else {

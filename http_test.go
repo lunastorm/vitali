@@ -64,6 +64,31 @@ func TestOK(t *testing.T) {
     }
 }
 
+func TestPartial(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/",
+        },
+        Header: make(http.Header),
+    }
+    r.Header.Set("Range", "bytes=0-")
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/", Root{}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusPartialContent {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    entity := rr.Body.String()
+    if entity != "root" {
+        t.Errorf("entity is `%s`", entity)
+    }
+}
+
 type Nothing struct {
     Ctx
 }
@@ -749,3 +774,4 @@ func TestHasPreEarlyReturn(t *testing.T) {
         t.Errorf("response code is %d", rr.Code)
     }
 }
+
