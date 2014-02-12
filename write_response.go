@@ -11,20 +11,27 @@ import (
     "encoding/json"
 )
 
-func (c webApp) marshalOutput(w *wrappedWriter, input interface{}, contentType MediaType, templateName string) {
+func (c *webApp) marshalOutput(w *wrappedWriter, input interface{}, contentType MediaType, templateName string) {
     switch contentType {
     case "application/json":
         fmt.Fprintf(w, "%s", string(panicOnErr(json.Marshal(input)).([]byte)))
     case "application/xml":
         fmt.Fprintf(w, "%s", string(panicOnErr(xml.Marshal(input)).([]byte)))
     case "text/html":
-        c.views[templateName].Execute(w, input)
+        m := struct{
+            S map[string]string
+            M *interface{}
+        }{
+            make(map[string]string),
+            &input,
+        }
+        c.views[templateName].Execute(w, m)
     default:
         fmt.Fprintf(w, "%s", input)
     }
 }
 
-func (c webApp) writeResponse(w *wrappedWriter, r *http.Request, response interface{}, chosenType MediaType, templateName string) {
+func (c *webApp) writeResponse(w *wrappedWriter, r *http.Request, response interface{}, chosenType MediaType, templateName string) {
     switch v := response.(type) {
     case noContent:
         w.WriteHeader(http.StatusNoContent)
