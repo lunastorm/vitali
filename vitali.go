@@ -107,7 +107,7 @@ func chooseType(provided MediaTypes, acceptHeader string) MediaType {
     return ""
 }
 
-func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{}, chosenType MediaType, viewName string) {
+func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{}, ctx Ctx, viewName string) {
     for i, routeRule := range c.RouteRules {
         params := c.PatternMappings[i].Re.FindStringSubmatch(r.URL.Path)
         if params != nil {
@@ -119,13 +119,11 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
             }
 
             user, role := c.UserProvider.GetUserAndRole(r)
-            ctx := Ctx {
-                pathParams: pathParams,
-                Username: user,
-                Roles: make(Roles),
-                Request: r,
-                ResponseWriter: w,
-            }
+            ctx.pathParams = pathParams
+            ctx.Username = user
+            ctx.Roles = make(Roles)
+            ctx.Request = r
+            ctx.ResponseWriter = w
             ctx.Roles[role] = struct{}{}
 
             contentType := r.Header.Get("Content-Type")
@@ -146,8 +144,7 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                     }
 
                     ctx.ChosenType = MediaType(chooseType(provided, r.Header.Get("Accept")))
-                    chosenType = ctx.ChosenType
-                    if chosenType == "" {
+                    if ctx.ChosenType == "" {
                         result = notAcceptable{provided}
                         return
                     }
@@ -277,8 +274,8 @@ func (c webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         inTime: time.Now(),
     }
     r.ParseForm()
-    result, chosenType, templateName := c.matchRules(ww, r)
-    c.writeResponse(ww, r, result, chosenType, templateName)
+    result, ctx, templateName := c.matchRules(ww, r)
+    c.writeResponse(ww, r, &result, &ctx, templateName)
 
     elapsedMs := float64(time.Now().UnixNano() - ww.inTime.UnixNano()) / 1000000
     c.logRequest(ww, r, elapsedMs, result)

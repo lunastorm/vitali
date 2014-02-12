@@ -11,28 +11,28 @@ import (
     "encoding/json"
 )
 
-func (c *webApp) marshalOutput(w *wrappedWriter, input interface{}, contentType MediaType, templateName string) {
-    switch contentType {
+func (c *webApp) marshalOutput(w *wrappedWriter, model *interface{}, ctx *Ctx, templateName string) {
+    switch ctx.ChosenType {
     case "application/json":
-        fmt.Fprintf(w, "%s", string(panicOnErr(json.Marshal(input)).([]byte)))
+        fmt.Fprintf(w, "%s", string(panicOnErr(json.Marshal(model)).([]byte)))
     case "application/xml":
-        fmt.Fprintf(w, "%s", string(panicOnErr(xml.Marshal(input)).([]byte)))
+        fmt.Fprintf(w, "%s", string(panicOnErr(xml.Marshal(model)).([]byte)))
     case "text/html":
         m := struct{
             S map[string]string
             M *interface{}
         }{
             make(map[string]string),
-            &input,
+            model,
         }
         c.views[templateName].Execute(w, m)
     default:
-        fmt.Fprintf(w, "%s", input)
+        fmt.Fprintf(w, "%s", model)
     }
 }
 
-func (c *webApp) writeResponse(w *wrappedWriter, r *http.Request, response interface{}, chosenType MediaType, templateName string) {
-    switch v := response.(type) {
+func (c *webApp) writeResponse(w *wrappedWriter, r *http.Request, response *interface{}, ctx *Ctx, templateName string) {
+    switch v := (*response).(type) {
     case noContent:
         w.WriteHeader(http.StatusNoContent)
     case view:
@@ -55,7 +55,7 @@ func (c *webApp) writeResponse(w *wrappedWriter, r *http.Request, response inter
         http.Error(w, v.reason, http.StatusBadRequest)
     case unauthorized:
         w.Header()["WWW-Authenticate"] = []string{v.wwwAuthHeader}
-        if c.Settings["401_PAGE"] != "" && chosenType == "text/html" {
+        if c.Settings["401_PAGE"] != "" && ctx.ChosenType == "text/html" {
             w.Header().Set("Content-Type", "text/html")
             w.WriteHeader(http.StatusUnauthorized)
             f, err := os.Open(c.Settings["401_PAGE"])
@@ -128,8 +128,8 @@ func (c *webApp) writeResponse(w *wrappedWriter, r *http.Request, response inter
         } else {
             w.WriteHeader(http.StatusOK)
         }
-        if chosenType != "" {
-            c.marshalOutput(w, v, chosenType, templateName)
+        if ctx.ChosenType != "" {
+            c.marshalOutput(w, &v, ctx, templateName)
         } else {
             fmt.Fprintf(w, "%s", v)
         }
