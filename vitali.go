@@ -28,6 +28,7 @@ type webApp struct {
     RouteRules []RouteRule
     PatternMappings []PatternMapping
     UserProvider UserProvider
+    LangProvider LangProvider
     Settings map[string]string
     DumpRequest bool
     ErrTemplate *template.Template
@@ -119,6 +120,7 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
             }
 
             user, role := c.UserProvider.GetUserAndRole(r)
+            ctx.ChosenLang = c.LangProvider.Select(r)
             ctx.pathParams = pathParams
             ctx.Username = user
             ctx.Roles = make(Roles)
@@ -316,6 +318,7 @@ func CreateWebApp(rules []RouteRule) webApp {
         RouteRules: rules,
         PatternMappings: patternMappings,
         UserProvider: EmptyUserProvider{},
+        LangProvider: EmptyLangProvider{},
         Settings: make(map[string]string),
         views: views,
     }

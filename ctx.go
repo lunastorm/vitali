@@ -10,6 +10,7 @@ type Ctx struct {
     Request *http.Request
     ResponseWriter  http.ResponseWriter
     ChosenType  MediaType
+    ChosenLang  string
     ContentType MediaType
 
     pathParams map[string]string
