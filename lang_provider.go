@@ -1,16 +1,12 @@
 package vitali
 
-import (
-    "net/http"
-)
-
 type LangProvider interface {
-    Select(*http.Request) string
+    Select(*Ctx) string
 }
 
 type EmptyLangProvider struct {
 }
 
-func (c EmptyLangProvider) Select(r *http.Request) string {
+func (c *EmptyLangProvider) Select(ctx *Ctx) string {
     return ""
 }

@@ -22,7 +22,7 @@ func (c *webApp) marshalOutput(w *wrappedWriter, model *interface{}, ctx *Ctx, t
             S map[string]string
             M *interface{}
         }{
-            make(map[string]string),
+            c.I18n[ctx.ChosenLang],
             model,
         }
         c.views[templateName].Execute(w, m)

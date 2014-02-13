@@ -5,6 +5,7 @@ import (
     "fmt"
     "strconv"
     "net/http"
+    "encoding/json"
     "net/http/httputil"
     "io/ioutil"
     "html/template"
@@ -32,6 +33,7 @@ type webApp struct {
     Settings map[string]string
     DumpRequest bool
     ErrTemplate *template.Template
+    I18n map[string]map[string]string
     views map[string]*template.Template
 }
 
@@ -120,13 +122,13 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
             }
 
             user, role := c.UserProvider.GetUserAndRole(r)
-            ctx.ChosenLang = c.LangProvider.Select(r)
             ctx.pathParams = pathParams
             ctx.Username = user
             ctx.Roles = make(Roles)
             ctx.Request = r
             ctx.ResponseWriter = w
             ctx.Roles[role] = struct{}{}
+            ctx.ChosenLang = c.LangProvider.Select(&ctx)
 
             contentType := r.Header.Get("Content-Type")
             if contentType != "" {
@@ -313,13 +315,19 @@ func CreateWebApp(rules []RouteRule) webApp {
             }
         }
     }
+    i18n := make(map[string]map[string]string)
+    content, err := ioutil.ReadFile("views/i18n.json")
+    if err == nil {
+        err = json.Unmarshal(content, &i18n)
+    }
 
     return webApp{
         RouteRules: rules,
         PatternMappings: patternMappings,
         UserProvider: EmptyUserProvider{},
-        LangProvider: EmptyLangProvider{},
+        LangProvider: &EmptyLangProvider{},
         Settings: make(map[string]string),
+        I18n: i18n,
         views: views,
     }
 }
