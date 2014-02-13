@@ -22,7 +22,11 @@ func (c *Ctx) AddHeader(key string, value string) {
 
 func (c *Ctx) Cookie(name string) (value string) {
     cookie, _ := c.Request.Cookie(name)
-    return cookie.Value
+    if cookie == nil {
+        return ""
+    } else {
+        return cookie.Value
+    }
 }
 
 func (c *Ctx) SetCookie(cookie *http.Cookie) {
