@@ -21,9 +21,11 @@ func (c *webApp) marshalOutput(w *wrappedWriter, model *interface{}, ctx *Ctx, t
         m := struct{
             S map[string]string
             M *interface{}
+            C *Ctx
         }{
             c.I18n[ctx.ChosenLang],
             model,
+            ctx,
         }
         c.views[templateName].Execute(w, m)
     default:
