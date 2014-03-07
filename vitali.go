@@ -33,7 +33,7 @@ type webApp struct {
     Settings map[string]string
     DumpRequest bool
     ErrTemplate *template.Template
-    I18n map[string]map[string]string
+    I18n map[string]map[string]template.HTML
     views map[string]*template.Template
 }
 
@@ -315,7 +315,7 @@ func CreateWebApp(rules []RouteRule) webApp {
             }
         }
     }
-    i18n := make(map[string]map[string]string)
+    i18n := make(map[string]map[string]template.HTML)
     content, err := ioutil.ReadFile("views/i18n.json")
     if err == nil {
         err = json.Unmarshal(content, &i18n)

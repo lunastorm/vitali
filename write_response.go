@@ -7,6 +7,7 @@ import (
     "fmt"
     "strings"
     "net/http"
+    "html/template"
     "encoding/xml"
     "encoding/json"
 )
@@ -19,7 +20,7 @@ func (c *webApp) marshalOutput(w *wrappedWriter, model *interface{}, ctx *Ctx, t
         fmt.Fprintf(w, "%s", string(panicOnErr(xml.Marshal(model)).([]byte)))
     case "text/html":
         m := struct{
-            S map[string]string
+            S map[string]template.HTML
             M *interface{}
             C *Ctx
         }{
