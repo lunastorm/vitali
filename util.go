@@ -10,8 +10,8 @@ import (
 func panicOnErr(res interface{}, e error) interface{} {
     if e != nil {
         panic(e)
-    }   
-    return res 
+    }
+    return res
 }
 
 func errorCode(msg string) uint32 {
@@ -36,6 +36,16 @@ func fullTrace(skip int, sep string) (trace string) {
             continue
         }
         trace = trace + sep + where
+    }
+    return
+}
+
+func Seq(begin int, total int, step int) (res []int) {
+    res = make([]int, total)
+    v := begin
+    for i:=0; i<total; i++ {
+        res[i] = v
+        v += step
     }
     return
 }

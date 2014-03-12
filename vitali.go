@@ -300,13 +300,16 @@ func CreateWebApp(rules []RouteRule) webApp {
         }
         patternMappings[i] = PatternMapping{regexp.MustCompile("^"+transformedPattern+"$"), names}
 
+        funcMap := template.FuncMap{
+            "seq": Seq,
+        }
         tViews, ok := reflect.TypeOf(v.Resource).FieldByName("Views")
         if ok {
             for _, kv := range(strings.Split(string(tViews.Tag), " ")) {
                 vStr := strings.Split(kv, ":")[1]
                 templatesName := vStr[1:len(vStr)-1]
 
-                temp := template.New(templatesName)
+                temp := template.New(templatesName).Funcs(funcMap)
                 for _, t := range(strings.Split(templatesName, ",")) {
                     content := panicOnErr(ioutil.ReadFile(fmt.Sprintf("./views/%s", t))).([]uint8)
                     template.Must(temp.Parse(string(content)))
