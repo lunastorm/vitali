@@ -556,6 +556,8 @@ func (c Redirects) Get() interface{} {
         return c.Found("/found")
     case "seeother":
         return c.SeeOther("/seeother")
+    case "temp":
+        return c.TempRedirect("/temp")
     }
     return ""
 }
@@ -603,6 +605,17 @@ func TestRedirects(t *testing.T) {
     }
     location = rr.Header().Get("Location")
     if location != "/moved" {
+        t.Errorf("location is `%s`", location)
+    }
+
+    r.Form.Set("type", "temp")
+    rr = httptest.NewRecorder()
+    webapp.ServeHTTP(rr, r)
+    if rr.Code != http.StatusTemporaryRedirect {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    location = rr.Header().Get("Location")
+    if location != "/temp" {
         t.Errorf("location is `%s`", location)
     }
 }

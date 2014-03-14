@@ -35,6 +35,15 @@ func (c *Ctx) SeeOther(uri string) seeOther {
     return seeOther{uri}
 }
 
+// 307
+type tempRedirect struct {
+    uri string
+}
+
+func (c *Ctx) TempRedirect(uri string) tempRedirect {
+    return tempRedirect{uri}
+}
+
 // 400
 type badRequest struct {
     reason string

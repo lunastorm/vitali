@@ -54,6 +54,9 @@ func (c *webApp) writeResponse(w *wrappedWriter, r *http.Request, response *inte
         w.Header().Set("Location", v.uri)
         w.WriteHeader(http.StatusSeeOther)
         fmt.Fprintf(w, "%s\n", v.uri)
+    case tempRedirect:
+        w.Header().Set("Location", v.uri)
+        w.WriteHeader(http.StatusTemporaryRedirect)
     case badRequest:
         http.Error(w, v.reason, http.StatusBadRequest)
     case unauthorized:
