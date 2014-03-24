@@ -236,7 +236,11 @@ func getResult(method string, vResourcePtr *reflect.Value) (result interface{}) 
         }
     }()
 
-    vMethod := vResourcePtr.MethodByName(strings.Title(strings.ToLower(method)))
+    methodName := strings.Title(strings.ToLower(method))
+    if methodName == "Head"{
+        methodName = "Get"
+    }
+    vMethod := vResourcePtr.MethodByName(methodName)
     if vMethod.IsValid() {
         result = vMethod.Call([]reflect.Value{})[0].Interface()
     }
