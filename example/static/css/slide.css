@@ -1,0 +1,49 @@
+#container {
+    height: 100%;
+}
+
+#slide_wrapper {
+    position: absolute;
+    width: 100%;
+    top: 50%;
+}
+
+.half {
+    position: fixed;
+    height: 100%;
+    width: 50%;
+    cursor: pointer;
+}
+
+#right_half {
+    left: 50%;
+}
+
+@media (max-width: 512px) {
+h1 {
+    font-size: 200% !important;
+}
+}
+
+h1 {
+    font-size: 800%;
+    margin: 0;
+    padding: 0;
+}
+
+h3 {
+    font-size: 200%;
+}
+
+#control {
+    position: fixed;
+}
+
+#raw {
+    width: 100%;
+    font-size: 200%;
+}
+
+.modal-footer > form {
+    display: inline-block;
+}

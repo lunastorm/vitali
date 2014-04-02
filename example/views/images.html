@@ -1,0 +1,20 @@
+{{ define "head" }}
+{{ end }}
+
+{{ define "content" }}
+<div class="row">
+  <div class="col-md-12">
+    <form method="POST" enctype="multipart/form-data">
+      <input type="file" name="image" accept="image/*"/>
+      <input type="submit"/>
+    </form>
+  </div>
+
+  <div class="col-md-12">
+    <a href="/image/{{.M}}"><h1>{{.M}}</h1></a>
+  </div>
+</div>
+{{ end }}
+
+{{ define "footer" }}
+{{ end }}

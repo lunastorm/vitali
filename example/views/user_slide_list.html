@@ -1,0 +1,44 @@
+{{define "head"}}
+{{end}}
+
+{{define "content"}}
+
+<div class="row">
+  <div class="col-md-3"></div>
+  <div class="col-md-6">
+    <ul class="list-group">
+      {{range .M}}
+      <a href="slide/{{.}}" class="list-group-item">{{.}}</a>
+      {{end}}
+    </ul>
+    <button class="btn btn-primary btn-lg" data-toggle="modal" data-target="#create_modal">
+      {{.S.CREATE_NEW_SLIDE}}
+    </button>
+  </div>
+  <div class="col-md-3"></div>
+</div>
+
+<div class="modal fade" id="create_modal" tabindex="-1" role="dialog" aria-labelledby="modal_title" aria-hidden="true">
+  <form method="POST">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title" id="modal_title">{{.S.CREATE_NEW_SLIDE}}</h4>
+        </div>
+        <div class="modal-body form-group">
+          <label for="slide_name">{{.S.SLIDE_NAME}}</label>
+          <input type="name" name="slide_name" class="form-control" id="slide_name" placeholder="{{.S.SLIDE_NAME}}" required/>
+        </div>
+        <div class="modal-footer">
+          <input type="submit" value="{{.S.CREATE}}"/>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+{{end}}
+
+{{define "footer"}}
+{{end}}

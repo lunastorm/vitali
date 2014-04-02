@@ -1,0 +1,44 @@
+{
+    "en-us": {
+        "DELETE": "Delete",
+        "DELETE_PAGE": "Delete this page?",
+        "CREATE_NEW_PAGE": "Create new page?",
+        "EDIT": "Edit",
+        "CANCEL": "Cancel",
+        "SAVE": "Save",
+        "SLIDE_NAME": "Slide Name",
+        "CREATE": "Create",
+        "DUPLICATE": "Duplicate",
+        "CREATE_NEW_SLIDE": "Create New Slide",
+        "USERNAME": "Username",
+        "PASSWORD": "Password",
+        "LOGIN": "Login",
+        "LOGOUT": "Logout"
+    },
+    "zh-tw": {
+        "DELETE": "刪除",
+        "DELETE_PAGE": "刪除此頁?",
+        "CREATE_NEW_PAGE": "建立新頁?",
+        "EDIT": "編輯",
+        "CANCEL": "取消",
+        "SAVE": "儲存",
+        "SLIDE_NAME": "投影片名稱",
+        "CREATE": "新建",
+        "DUPLICATE": "複製",
+        "CREATE_NEW_SLIDE": "建立新投影片",
+        "USERNAME": "Username",
+        "PASSWORD": "Password",
+        "LOGIN": "Login",
+        "LOGOUT": "Logout"
+    },
+    "zh-tw": {
+        "EDIT": "編輯",
+        "SLIDE_NAME": "投影片名稱",
+        "CREATE": "建立",
+        "CREATE_NEW_SLIDE": "建立投影片",
+        "USERNAME": "使用者",
+        "PASSWORD": "密碼",
+        "LOGIN": "登入",
+        "LOGOUT": "登出"
+    }
+}

@@ -1,0 +1,117 @@
+{{define "head"}}
+<link rel="stylesheet" href="/static/css/slide.css">
+{{end}}
+
+{{define "content"}}
+
+<div id="slide_wrapper" class="text-center">
+  {{.M.Page.HTML}}
+</div>
+
+<div id="left_half" class="half">
+</div>
+<div id="right_half" class="half">
+</div>
+
+<div id="control">
+  <button class="btn btn-default btn-lg" data-toggle="modal" data-target="#create_modal">
+    <span class="glyphicon glyphicon-plus"></span>
+  </button>
+  <button class="btn btn-default btn-lg">
+    <span class="glyphicon glyphicon-trash" data-toggle="modal" data-target="#delete_modal"></span>
+  </button>
+  <button class="btn btn-default btn-lg" data-toggle="modal" data-target="#edit_modal">
+    <span class="glyphicon glyphicon-pencil"></span>
+  </button>
+  <button class="btn btn-default btn-lg" onclick="toggle_remote()">
+    <span class="glyphicon glyphicon-phone"></span>
+  </button>
+  {{.C.PathParam "page"}} / {{.M.TotalPages}}
+</div>
+
+<div id="create_modal" class="modal fade" tabindex="-1" role="dialog"
+    aria-labelledby="create_modal_label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"
+            aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="create_modal_label">{{.S.CREATE}}</h4>
+      </div>
+      <div class="modal-body">
+        {{.S.CREATE_NEW_PAGE}}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">
+          {{.S.CANCEL}}
+        </button>
+        <form method="POST">
+          <input type="hidden" name="create" value="dup"/>
+          <input type="submit" class="btn btn-primary" value="{{.S.DUPLICATE}}">
+        </form>
+        <form method="POST">
+          <input type="hidden" name="create" value="create"/>
+          <input type="submit" class="btn btn-primary" value="{{.S.CREATE}}">
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="delete_modal" class="modal fade" tabindex="-1" role="dialog"
+    aria-labelledby="delete_modal_label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"
+            aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="create_modal_label">{{.S.DELETE}}</h4>
+      </div>
+      <div class="modal-body">
+        {{.S.DELETE_PAGE}}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">
+          {{.S.CANCEL}}
+        </button>
+        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="delete_page()">
+          {{.S.DELETE}}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="edit_modal" class="modal fade" tabindex="-1" role="dialog"
+    aria-labelledby="edit_modal_label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"
+              aria-hidden="true">&times;</button>
+          <h4 class="modal-title" id="edit_modal_label">{{.S.EDIT}}</h4>
+        </div>
+        <div class="modal-body">
+          <textarea id="raw" name="raw" rows="10">{{.M.Page.Raw}}</textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">
+            {{.S.CANCEL}}
+          </button>
+          <input type="submit" class="btn btn-primary" value="{{.S.SAVE}}">
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{{end}}
+
+{{define "footer"}}
+<script>
+var total_pages = {{.M.TotalPages}}
+var slide_name = "{{.C.PathParam "name"}}"
+</script>
+<script src="/static/js/slide.js"></script>
+{{end}}
