@@ -16,7 +16,8 @@ type Progress struct {
 
 func (c *Progress) Get() interface{} {
     clientClosec := c.ResponseWriter.(http.CloseNotifier).CloseNotify()
-    progressc := c.ChanMap.Get(c.Username, c.PathParam("slide"))
+    progressc := c.ChanMap.Get(c.Username, c.PathParam("slide"), c.Request.RemoteAddr)
+    defer c.ChanMap.Remove(c.Username, c.PathParam("slide"), c.Request.RemoteAddr)
     for ;; {
         select {
         case progress := <-progressc:
@@ -32,8 +33,6 @@ func (c *Progress) Post() interface{} {
     if err != nil {
         return c.BadRequest("bad page")
     }
-
-    progressc := c.ChanMap.Get(c.Username, c.PathParam("slide"))
-    progressc <- int(page)
+    c.ChanMap.Broadcast(c.Username, c.PathParam("slide"), int(page))
     return c.NoContent()
 }
