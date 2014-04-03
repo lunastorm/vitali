@@ -1,7 +1,8 @@
 $(document).ready(function(){
     $("#slide_wrapper").css("padding-left", (($(window).width()-1024)/2)+"px")
     $("#slide_wrapper").css("padding-right", (($(window).width()-1024)/2)+"px")
-    $("#slide_wrapper").css("margin-top", -$("#slide_wrapper").height()/3*2+"px")
+    $("#slide_wrapper").css("margin-top", ($(window).height()-$("#slide_wrapper").height())/2+"px")
+    $("#slide_wrapper").css("visibility", "visible")
 })
 
 $("body").bind("touchmove", function(e){

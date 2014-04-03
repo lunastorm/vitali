@@ -5,7 +5,7 @@
 #slide_wrapper {
     position: absolute;
     width: 100%;
-    top: 50%;
+    visibility: hidden;
 }
 
 .half {
@@ -46,4 +46,10 @@ h3 {
 
 .modal-footer > form {
     display: inline-block;
+}
+
+#slide_wrapper > img {
+    width: auto;
+    max-height: 768px;
+    max-width: 100%;
 }
