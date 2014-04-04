@@ -26,13 +26,19 @@ h1 {
 }
 
 h1 {
-    font-size: 800%;
-    margin: 0;
+    font-size: 700%;
+    margin: 10px 10px 20px 10px;
     padding: 0;
 }
 
+li {
+    font-size: 250%;
+    text-align: left;
+    margin-left: 100px;
+}
+
 h3 {
-    font-size: 200%;
+    font-size: 250%;
 }
 
 #control {
@@ -52,4 +58,9 @@ h3 {
     width: auto;
     max-height: 768px;
     max-width: 100%;
+}
+
+pre {
+    text-align: left;
+    font-size: 200%;
 }
