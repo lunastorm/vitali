@@ -9,11 +9,7 @@
         "SLIDE_NAME": "Slide Name",
         "CREATE": "Create",
         "DUPLICATE": "Duplicate",
-        "CREATE_NEW_SLIDE": "Create New Slide",
-        "USERNAME": "Username",
-        "PASSWORD": "Password",
-        "LOGIN": "Login",
-        "LOGOUT": "Logout"
+        "CREATE_NEW_SLIDE": "Create New Slide"
     },
     "zh-tw": {
         "DELETE": "刪除",
@@ -25,20 +21,6 @@
         "SLIDE_NAME": "投影片名稱",
         "CREATE": "新建",
         "DUPLICATE": "複製",
-        "CREATE_NEW_SLIDE": "建立新投影片",
-        "USERNAME": "Username",
-        "PASSWORD": "Password",
-        "LOGIN": "Login",
-        "LOGOUT": "Logout"
-    },
-    "zh-tw": {
-        "EDIT": "編輯",
-        "SLIDE_NAME": "投影片名稱",
-        "CREATE": "建立",
-        "CREATE_NEW_SLIDE": "建立投影片",
-        "USERNAME": "使用者",
-        "PASSWORD": "密碼",
-        "LOGIN": "登入",
-        "LOGOUT": "登出"
+        "CREATE_NEW_SLIDE": "建立新投影片"
     }
 }
