@@ -8,6 +8,20 @@ function recenter(){
 $(document).ready(recenter)
 $("img").load(recenter)
 
+function show_css(){
+    $("#raw").hide()
+    $("#css").show()
+    $("#raw_tab").removeClass("active")
+    $("#css_tab").addClass("active")
+}
+
+function show_raw(){
+    $("#css").hide()
+    $("#raw").show()
+    $("#css_tab").removeClass("active")
+    $("#raw_tab").addClass("active")
+}
+
 $("#edit_modal").on("shown.bs.modal", function(){
     var textarea = $(this).find("textarea")[0]
     textarea.selectionStart = textarea.value.length

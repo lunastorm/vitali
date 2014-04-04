@@ -69,3 +69,14 @@ pre {
     text-align: left;
     font-size: 200%;
 }
+
+#edit_nav > li {
+    margin: 0;
+    font-size: 100%;
+}
+
+#css {
+    width: 100%;
+    font-size: 200%;
+    display: none;
+}

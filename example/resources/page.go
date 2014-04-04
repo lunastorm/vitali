@@ -8,6 +8,11 @@ import (
 
 type PageModel struct {
     Raw string `json:"raw"`
+    CSS string `json:"css"`
+}
+
+func (c *PageModel) UnescapeCSS() (template.CSS) {
+    return template.CSS(c.CSS)
 }
 
 func (c *PageModel) HTML() (res template.HTML) {

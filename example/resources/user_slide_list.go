@@ -38,7 +38,7 @@ func (c *UserSlideList) Post() interface{} {
 
     enc := json.NewEncoder(f)
     m := SlideModel{}
-    m.InsertPage(0, "")
+    m.InsertPage(0, "", "")
     enc.Encode(m)
     return c.SeeOther("slide/" + c.Param("slide_name"))
 }

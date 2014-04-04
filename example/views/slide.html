@@ -1,5 +1,8 @@
 {{define "head"}}
 <link rel="stylesheet" href="/static/css/slide.css">
+<style>
+{{.M.Page.UnescapeCSS}}
+</style>
 {{end}}
 
 {{define "content"}}
@@ -102,7 +105,12 @@
           <h4 class="modal-title" id="edit_modal_label">{{.S.EDIT}}</h4>
         </div>
         <div class="modal-body">
+          <ul id="edit_nav" class="nav nav-tabs">
+            <li id="raw_tab" class="active"><a href="#" onclick="show_raw()">Raw</a></li>
+            <li id="css_tab"><a href="#" onclick="show_css()">CSS</a></li>
+          </ul>
           <textarea id="raw" name="raw" rows="10">{{.M.Page.Raw}}</textarea>
+          <textarea id="css" name="css" rows="10">{{.M.Page.CSS}}</textarea>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">

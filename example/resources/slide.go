@@ -14,8 +14,8 @@ type SlideModel struct {
     Pages []PageModel `json:"pages"`
 }
 
-func (c *SlideModel) InsertPage(idx int, raw string) {
-    c.Pages = append(c.Pages[:idx], append([]PageModel{PageModel{raw}}, c.Pages[idx:]...)...)
+func (c *SlideModel) InsertPage(idx int, raw string, css string) {
+    c.Pages = append(c.Pages[:idx], append([]PageModel{PageModel{raw, css}}, c.Pages[idx:]...)...)
 }
 
 func (c *SlideModel) RemovePage(idx int) {
@@ -106,9 +106,10 @@ func (c *Slide) Post() interface{} {
     slide := c.getSlide()
     if c.Param("create") == "create" || c.Param("create") == "dup" {
         if c.Param("create") == "create" {
-            slide.InsertPage(int(c.Page), "")
+            slide.InsertPage(int(c.Page), "", "")
         } else {
-            slide.InsertPage(int(c.Page), slide.Pages[int(c.Page-1)].Raw)
+            slide.InsertPage(int(c.Page), slide.Pages[int(c.Page-1)].Raw,
+                slide.Pages[int(c.Page-1)].CSS)
         }
         c.saveSlide(&slide)
         c.SetCookie(&http.Cookie{
@@ -119,11 +120,8 @@ func (c *Slide) Post() interface{} {
         })
         return c.SeeOther(fmt.Sprintf("%d", c.Page+1))
     }
-
-    if slide.Pages[c.Page-1].Raw == c.Param("raw") {
-        return c.SeeOther(fmt.Sprintf("%d", c.Page))
-    }
     slide.Pages[c.Page-1].Raw = c.Param("raw")
+    slide.Pages[c.Page-1].CSS = c.Param("css")
     c.saveSlide(&slide)
     return c.SeeOther(fmt.Sprintf("%d", c.Page))
 }
