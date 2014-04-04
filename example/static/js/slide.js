@@ -6,6 +6,13 @@ function recenter(){
 }
 
 $(document).ready(recenter)
+$("img").load(recenter)
+
+$("#edit_modal").on("shown.bs.modal", function(){
+    var textarea = $(this).find("textarea")[0]
+    textarea.selectionStart = textarea.value.length
+    textarea.selectionEnd = textarea.value.length
+})
 
 $("body").bind("touchmove", function(e){
     e.preventDefault()
@@ -71,4 +78,7 @@ else {
     })
 }
 
-$("img").load(recenter)
+if($.cookie("create") == "create") {
+    $("#edit_modal").modal({})
+    $.removeCookie("create", {path: location.pathname})
+}

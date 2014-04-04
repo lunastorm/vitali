@@ -104,15 +104,22 @@ func (c *Slide) saveSlide(s *SlideModel) {
 
 func (c *Slide) Post() interface{} {
     slide := c.getSlide()
-    if c.Param("create") == "create" {
-        slide.InsertPage(int(c.Page), "")
+    if c.Param("create") == "create" || c.Param("create") == "dup" {
+        if c.Param("create") == "create" {
+            slide.InsertPage(int(c.Page), "")
+        } else {
+            slide.InsertPage(int(c.Page), slide.Pages[int(c.Page-1)].Raw)
+        }
         c.saveSlide(&slide)
-        return c.SeeOther(fmt.Sprintf("%d", c.Page+1))
-    } else if c.Param("create") == "dup" {
-        slide.InsertPage(int(c.Page), slide.Pages[int(c.Page-1)].Raw)
-        c.saveSlide(&slide)
+        c.SetCookie(&http.Cookie{
+            Name: "create",
+            Value: "create",
+            Path: fmt.Sprintf("/user/%s/slide/%s/%d", c.PathParam("user"), c.PathParam("name"), c.Page+1),
+            Expires: time.Now().Add(30*24*time.Hour),
+        })
         return c.SeeOther(fmt.Sprintf("%d", c.Page+1))
     }
+
     if slide.Pages[c.Page-1].Raw == c.Param("raw") {
         return c.SeeOther(fmt.Sprintf("%d", c.Page))
     }
