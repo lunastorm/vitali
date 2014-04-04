@@ -1,9 +1,11 @@
-$(document).ready(function(){
+function recenter(){
     $("#slide_wrapper").css("padding-left", (($(window).width()-1024)/2)+"px")
     $("#slide_wrapper").css("padding-right", (($(window).width()-1024)/2)+"px")
     $("#slide_wrapper").css("margin-top", ($(window).height()-$("#slide_wrapper").height())/2+"px")
     $("#slide_wrapper").css("visibility", "visible")
-})
+}
+
+$(document).ready(recenter)
 
 $("body").bind("touchmove", function(e){
     e.preventDefault()
@@ -68,3 +70,5 @@ else {
         location.href = res
     })
 }
+
+$("img").load(recenter)
