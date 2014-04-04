@@ -45,6 +45,11 @@ h3 {
     position: fixed;
 }
 
+#control-right {
+    position: fixed;
+    right: 0px;
+}
+
 #raw {
     width: 100%;
     font-size: 200%;
