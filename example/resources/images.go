@@ -4,6 +4,7 @@ import (
     "io"
     "os"
     "fmt"
+    "net/http"
     "image/gif"
     "image/png"
     "image/jpeg"
@@ -16,7 +17,7 @@ type Images struct {
     vitali.Ctx
     vitali.Perm `POST:"AUTHED"`
     vitali.Provides `GET:"text/html" POST:"text/html"`
-    vitali.Consumes `POST:"multipart/form-data"`
+    vitali.Consumes `POST:"multipart/form-data,application/x-www-form-urlencoded"`
     vitali.Views `GET:"base.html,images.html" POST:"base.html,images.html"`
 }
 
@@ -25,8 +26,18 @@ func (c *Images) Get() interface{} {
 }
 
 func (c *Images) Post() interface{} {
-    f, _, err := c.Request.FormFile("image")
-    if err != nil {panic(err)}
+    var f io.ReadCloser
+    var err error
+    if c.Param("url") != "" {
+        res, err := http.Get(c.Param("url"))
+        if err != nil {
+            return c.BadRequest("cannot get image")
+        }
+        f = res.Body
+    } else {
+        f, _, err = c.Request.FormFile("image")
+        if err != nil {panic(err)}
+    }
     defer f.Close()
 
     tmpf, err := ioutil.TempFile("", "vitali-example-img-")
