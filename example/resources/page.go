@@ -31,6 +31,8 @@ func (c *PageModel) HTML() (res template.HTML) {
         case '{':
             code = true
             res += template.HTML("<pre>")
+        case '@':
+            res += template.HTML(fmt.Sprintf(`<a href="%s" target=_blank><h3>%s</h3></a>`, line[1:], line[1:]))
         default:
             res += template.HTML(fmt.Sprintf("<h3>%s</h3>\n", line))
         }
