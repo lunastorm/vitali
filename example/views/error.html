@@ -1,0 +1,17 @@
+{{ define "head" }}
+<style type="text/css">
+body {
+    background-color: black;
+}
+</style>
+{{ end }}
+
+{{ define "content" }}
+<div class="row" style="background-color: black; text-align: center">
+  <span style="color: red; font-size: 50px; font-weight: bold">Error #{{.Code}}</span>
+  <img src="/static/pic/error.jpg"/>
+</div>
+{{ end }}
+
+{{ define "footer" }}
+{{ end }}
