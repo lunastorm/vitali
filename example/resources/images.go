@@ -15,7 +15,7 @@ import (
 
 type Images struct {
     vitali.Ctx
-    vitali.Perm `POST:"AUTHED"`
+    vitali.Perm `*:"AUTHED"`
     vitali.Provides `GET:"text/html" POST:"text/html"`
     vitali.Consumes `POST:"multipart/form-data,application/x-www-form-urlencoded"`
     vitali.Views `GET:"base.html,images.html" POST:"base.html,images.html"`
