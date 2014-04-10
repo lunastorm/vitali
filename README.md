@@ -192,3 +192,69 @@ func (c *Image) Pre() interface{} {
     }
 }
 ```
+
+## vitali.Consumes
+It controls which request content types are accepted if specified. For example,
+```
+type UserInfo struct {
+    vitali.Ctx
+    vitali.Consumes `POST:"application/x-www-form-urlencoded,application/json"`
+}
+```
+means that the POST method only accepts content-type _application/x-www-form-urlencoded_ or _application/json_.
+
+## vitali.Provides and vitali.Views
+This does the content negotiation with the requester's _Accept_ header.
+```
+type UserInfo struct {
+    vitali.Ctx
+    vitali.Provides `GET:"application/json,text/html"`
+    vitali.Views `GET:"base.html,userinfo.html"`
+}
+```
+The result returned by the GET method will be serialized to JSON automatically if content type _application/json_ is chosen. If _text/html_ is chosen, it will lookup the struct tag of vitali.Views if defined, and execute the templates with the model returned.
+
+## Extended Template
+Originally you can only use _{{.}}_ to get the model in the template. vitali moves _{{.}}_ to _{{.M}}_, with .M represents the model.
+
+_{{.C}}_ lets you access vitali.Ctx in the view, so that you can display something like username in the page by _{{.C.Username}}_
+
+_{{.S}}_ is the i18n dictionary map. This is how you write the string lables in the template: e.g., _{{.S.SOMELABEL}}_
+
+You have to create a file named _i18n.json_ in the _views_ subdirectory like this:
+```
+{
+    "en-us": {
+        "SLIDE_NAME": "Slide Name",
+        "CREATE": "Create",
+        "DUPLICATE": "Duplicate",
+        "CREATE_NEW_SLIDE": "Create New Slide"
+    },  
+    "zh-tw": {
+        "SLIDE_NAME": "投影片名稱",
+        "CREATE": "新建",
+        "DUPLICATE": "複製",
+        "CREATE_NEW_SLIDE": "建立新投影片"
+    }   
+}
+```
+
+## Language Provider
+Implement the LangProvider interface and set it in the webapp to select the locale.
+
+For example,
+```
+func (c *LangProvider) Select(ctx *vitali.Ctx) (lang string) {
+    lang = ctx.Cookie("lang")
+    if lang != "" {
+        return
+    }
+    lang = "en-us"
+
+    accept := ctx.Header("Accept-Language")
+    /*
+    process the accept-language header
+    */
+    ...
+}
+```
