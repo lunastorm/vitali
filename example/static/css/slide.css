@@ -19,16 +19,16 @@
     left: 50%;
 }
 
-@media (max-width: 512px) {
-h1 {
-    font-size: 200% !important;
-}
-}
-
 h1 {
     font-size: 700%;
     margin: 10px 10px 20px 10px;
     padding: 0;
+}
+
+@media (max-width: 512px) {
+h1 {
+    font-size: 200% !important;
+}
 }
 
 li {
@@ -37,8 +37,20 @@ li {
     margin-left: 100px;
 }
 
+@media (max-width: 512px) {
+li {
+    font-size: 70%;
+}
+}
+
 h3 {
     font-size: 250%;
+}
+
+@media (max-width: 512px) {
+h3 {
+    font-size: 70%;
+}
 }
 
 #control {
@@ -48,6 +60,13 @@ h3 {
 #control-right {
     position: fixed;
     right: 0px;
+}
+
+@media (max-width: 512px) {
+#control-right {
+    bottom: 0px;
+    left: 0px;
+}
 }
 
 #raw {
@@ -69,6 +88,18 @@ pre {
     text-align: left;
     font-size: 200%;
     tab-size: 4;
+}
+
+@media (max-width: 512px) {
+pre {
+    font-size: 50% !important;
+}
+}
+
+@media (max-width: 512px) {
+.glyphicon {
+    font-size: 50% !important;
+}
 }
 
 #edit_nav > li {

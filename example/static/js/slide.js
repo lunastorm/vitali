@@ -80,6 +80,12 @@ $(document).keydown(function(e){
     else if(e.which == 37) {
         prev_page()
     }
+    else if(e.which == 36) {
+        location.href = '1'
+    }
+    else if(e.which == 35) {
+        location.href = total_pages
+    }
 })
 
 if($.cookie("remote") == "true") {
