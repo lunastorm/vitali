@@ -46,6 +46,9 @@ function prev_page() {
     location.href = parseInt($.cookie("page"))-1
 }
 
+$(window).on("swipeleft", next_page)
+$(window).on("swiperight", prev_page)
+
 function delete_page() {
     $.ajax({
         type: "DELETE",
