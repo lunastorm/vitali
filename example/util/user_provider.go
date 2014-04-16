@@ -13,7 +13,8 @@ func (c *UserProvider) AuthHeader(r *http.Request) (WWWAuthenticate string) {
     return `Basic realm="vitali"`
 }
 
-func (c *UserProvider) GetUserAndRole(r *http.Request) (user string, role string) {
+func (c *UserProvider) GetUserAndRoles(r *http.Request) (user string, roles []string) {
+    roles = make([]string, 0)
     authHeader := r.Header.Get("Authorization")
     if !strings.HasPrefix(authHeader, "Basic ") {
         return
@@ -26,7 +27,7 @@ func (c *UserProvider) GetUserAndRole(r *http.Request) (user string, role string
     password := tmp[1]
 
     if user == "foo" && password == "bar" {
-        return user, "AUTHED"
+        return user, []string{"AUTHED"}
     } else {
         user = ""
         return

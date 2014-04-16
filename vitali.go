@@ -121,13 +121,15 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                 }
             }
 
-            user, role := c.UserProvider.GetUserAndRole(r)
+            user, roles := c.UserProvider.GetUserAndRoles(r)
             ctx.pathParams = pathParams
             ctx.Username = user
             ctx.Roles = make(Roles)
             ctx.Request = r
             ctx.ResponseWriter = w
-            ctx.Roles[role] = struct{}{}
+            for _, role := range roles {
+                ctx.Roles[role] = struct{}{}
+            }
             ctx.ChosenLang = c.LangProvider.Select(&ctx)
 
             contentType := r.Header.Get("Content-Type")

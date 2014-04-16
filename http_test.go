@@ -408,8 +408,8 @@ func TestNeedAuth(t *testing.T) {
 type Auther struct {
 }
 
-func (c Auther) GetUserAndRole(r *http.Request) (string, string) {
-    return "bob", "authed"
+func (c Auther) GetUserAndRoles(r *http.Request) (string, []string) {
+    return "bob", []string{"authed"}
 }
 
 func (c Auther) AuthHeader(r *http.Request) string {
