@@ -30,7 +30,7 @@ func (c *webApp) marshalOutput(w *wrappedWriter, model *interface{}, ctx *Ctx, t
         }
         c.views[templateName].Execute(w, m)
     default:
-        fmt.Fprintf(w, "%s", model)
+        fmt.Fprintf(w, "%s", *model)
     }
 }
 
