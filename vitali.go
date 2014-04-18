@@ -354,3 +354,8 @@ type Roles map[string]struct{}
 func (c Roles) Add(role string) {
     c[role] = struct{}{}
 }
+
+func (c Roles) Exist(role string) bool {
+    _, exist := c[role]
+    return exist
+}
