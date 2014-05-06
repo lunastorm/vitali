@@ -23,10 +23,12 @@ func (c *webApp) marshalOutput(w *wrappedWriter, model *interface{}, ctx *Ctx, t
             S map[string]template.HTML
             M *interface{}
             C *Ctx
+            W *webApp
         }{
             c.I18n[ctx.ChosenLang],
             model,
             ctx,
+            c,
         }
         c.views[templateName].Execute(w, m)
     default:
@@ -75,7 +77,19 @@ func (c *webApp) writeResponse(w *wrappedWriter, r *http.Request, response *inte
             http.Error(w, "unauthorized", http.StatusUnauthorized)
         }
     case forbidden:
-        http.Error(w, "Forbidden", http.StatusForbidden)
+        if c.Settings["403_PAGE"] != "" && ctx.ChosenType == "text/html" {
+            w.Header().Set("Content-Type", "text/html")
+            w.WriteHeader(http.StatusForbidden)
+            f, err := os.Open(c.Settings["403_PAGE"])
+            if err != nil {
+                log.Printf("open 403 page error: %s\n", err)
+                return
+            }
+            defer f.Close()
+            io.Copy(w, f)
+        } else {
+            http.Error(w, "Forbidden", http.StatusForbidden)
+        }
     case notFound:
         http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
     case methodNotAllowed:
