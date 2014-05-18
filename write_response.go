@@ -40,10 +40,6 @@ func (c *webApp) writeResponse(w *wrappedWriter, r *http.Request, response *inte
     switch v := (*response).(type) {
     case noContent:
         w.WriteHeader(http.StatusNoContent)
-    case view:
-        w.Header().Set("Content-Type", "text/html")
-        w.WriteHeader(http.StatusOK)
-        v.template.Execute(w, v.model)
     case movedPermanently:
         w.Header().Set("Location", v.uri)
         w.WriteHeader(http.StatusMovedPermanently)
