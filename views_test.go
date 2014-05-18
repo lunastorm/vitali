@@ -125,3 +125,40 @@ func TestView1Post(t *testing.T) {
         t.Errorf("entity is `%s`", entity)
     }
 }
+
+type ViewCtx struct {
+    Ctx
+    Provides `GET:"text/html"`
+    Views `GET:"ctx.html"`
+}
+
+func (c *ViewCtx) Get() interface{} {
+    return ""
+}
+
+func TestViewCtx(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/viewctx",
+        },
+        Header: make(http.Header),
+    }
+    r.Header.Set("Accept-Language", "en-us")
+
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/viewctx", ViewCtx{}},
+    })
+    webapp.LangProvider = &TestLangProvider{}
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    entity := rr.Body.String()
+    if entity != "en-us\n" {
+        t.Errorf("entity is `%s`", entity)
+    }
+}
