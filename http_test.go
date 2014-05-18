@@ -748,4 +748,3 @@ func TestHasPreEarlyReturn(t *testing.T) {
         t.Errorf("response code is %d", rr.Code)
     }
 }
-
