@@ -252,7 +252,11 @@ type Something2 struct {
 }
 
 func (c Something2) Get() interface{} {
-    return c.Param("id")
+    if c.HasParam("foo") {
+        return "foo"
+    } else {
+        return c.Param("id")
+    }
 }
 
 func TestForm(t *testing.T) {
@@ -276,6 +280,17 @@ func TestForm(t *testing.T) {
     }
     entity := rr.Body.String()
     if entity != "5566" {
+        t.Errorf("id is `%s`", entity)
+    }
+
+    rr = httptest.NewRecorder()
+    r.Form.Add("foo", "bar")
+    webapp.ServeHTTP(rr, r)
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    entity = rr.Body.String()
+    if entity != "foo" {
         t.Errorf("id is `%s`", entity)
     }
 }

@@ -37,6 +37,11 @@ func (c *Ctx) Param(key string) string {
     return c.Request.Form.Get(key)
 }
 
+func (c *Ctx) HasParam(key string) bool {
+    _, exists := c.Request.Form[key]
+    return exists
+}
+
 func (c *Ctx) ParamArray(key string) []string {
     return c.Request.Form[key]
 }
