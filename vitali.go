@@ -295,6 +295,10 @@ func (c webApp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateWebApp(rules []RouteRule) webApp {
+    return CreateWebAppWithFuncmap(rules, template.FuncMap{})
+}
+
+func CreateWebAppWithFuncmap(rules []RouteRule, funcMap template.FuncMap) webApp {
     patternMappings := make([]PatternMapping, len(rules))
     views := make(map[string]*template.Template)
     for i, v := range rules {
@@ -309,9 +313,7 @@ func CreateWebApp(rules []RouteRule) webApp {
         }
         patternMappings[i] = PatternMapping{regexp.MustCompile("^"+transformedPattern+"$"), names}
 
-        funcMap := template.FuncMap{
-            "seq": Seq,
-        }
+        funcMap["seq"] = Seq
         tViews, ok := reflect.TypeOf(v.Resource).FieldByName("Views")
         if ok {
             for _, kv := range(strings.Split(string(tViews.Tag), " ")) {

@@ -4,6 +4,7 @@ import (
     "testing"
     "net/http"
     "net/url"
+    "html/template"
     "net/http/httptest"
 )
 
@@ -196,6 +197,47 @@ func TestViewWebapp(t *testing.T) {
     }
     entity := rr.Body.String()
     if entity != "test config\n" {
+        t.Errorf("entity is `%s`", entity)
+    }
+}
+
+type ViewWebappWithFunc struct {
+    Ctx
+    Provides `GET:"text/html"`
+    Views `GET:"func_test.html"`
+}
+
+func (c *ViewWebappWithFunc) Get() interface{} {
+    return "bar"
+}
+
+func Foo(bar interface{}) string {
+    return "foo:"+bar.(string)
+}
+
+func TestViewWebappWithFunc(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/viewwebappwithfunc",
+        },
+        Header: make(http.Header),
+    }
+
+    rr := httptest.NewRecorder()
+    webapp := CreateWebAppWithFuncmap([]RouteRule{
+        {"/viewwebappwithfunc", ViewWebappWithFunc{}},
+    },template.FuncMap{
+        "foo": Foo,
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusOK {
+        t.Errorf("response code is %d", rr.Code)
+    }
+    entity := rr.Body.String()
+    if entity != "foo:bar\n" {
         t.Errorf("entity is `%s`", entity)
     }
 }
