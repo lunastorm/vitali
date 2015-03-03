@@ -13,6 +13,7 @@ import (
     "regexp"
     "strings"
     "reflect"
+    "github.com/go-fsnotify/fsnotify"
 )
 
 type RouteRule struct {
@@ -298,6 +299,30 @@ func CreateWebApp(rules []RouteRule) webApp {
     return CreateWebAppWithFuncmap(rules, template.FuncMap{})
 }
 
+func updateTemplate(templatesName string, views map[string]*template.Template, funcMap template.FuncMap) {
+    temp := template.New(templatesName).Funcs(funcMap)
+    watcher, err := fsnotify.NewWatcher()
+    if err != nil { panic(err) }
+
+    for _, t := range(strings.Split(templatesName, ",")) {
+        path := fmt.Sprintf("./views/%s", t)
+        err = watcher.Add(path)
+        if err != nil { panic(err) }
+
+        content := panicOnErr(ioutil.ReadFile(path)).([]uint8)
+        _, err = temp.Parse(string(content))
+        if err != nil {
+            log.Printf("failed to parse template %s: %s\n", t, err)
+        }
+    }
+    go func() {
+        <-watcher.Events
+        watcher.Close()
+        updateTemplate(templatesName, views, funcMap)
+    }()
+    views[templatesName] = temp
+}
+
 func CreateWebAppWithFuncmap(rules []RouteRule, funcMap template.FuncMap) webApp {
     patternMappings := make([]PatternMapping, len(rules))
     views := make(map[string]*template.Template)
@@ -320,12 +345,7 @@ func CreateWebAppWithFuncmap(rules []RouteRule, funcMap template.FuncMap) webApp
                 vStr := strings.Split(kv, ":")[1]
                 templatesName := vStr[1:len(vStr)-1]
 
-                temp := template.New(templatesName).Funcs(funcMap)
-                for _, t := range(strings.Split(templatesName, ",")) {
-                    content := panicOnErr(ioutil.ReadFile(fmt.Sprintf("./views/%s", t))).([]uint8)
-                    template.Must(temp.Parse(string(content)))
-                }
-                views[templatesName] = temp
+                updateTemplate(templatesName, views, funcMap)
             }
         }
     }
