@@ -36,6 +36,7 @@ type webApp struct {
     ErrTemplate *template.Template
     I18n map[string]map[string]template.HTML
     views map[string]*template.Template
+    viewWatcher *fsnotify.Watcher
 }
 
 func checkPermission(perm reflect.StructTag, method Method, roles Roles) bool {
@@ -301,31 +302,51 @@ func CreateWebApp(rules []RouteRule) webApp {
 
 func updateTemplate(templatesName string, views map[string]*template.Template, funcMap template.FuncMap) {
     temp := template.New(templatesName).Funcs(funcMap)
-    watcher, err := fsnotify.NewWatcher()
-    if err != nil { panic(err) }
-
     for _, t := range(strings.Split(templatesName, ",")) {
         path := fmt.Sprintf("./views/%s", t)
-        err = watcher.Add(path)
-        if err != nil { panic(err) }
-
         content := panicOnErr(ioutil.ReadFile(path)).([]uint8)
-        _, err = temp.Parse(string(content))
+        _, err := temp.Parse(string(content))
         if err != nil {
             log.Printf("failed to parse template %s: %s\n", t, err)
+            break
         }
     }
-    go func() {
-        <-watcher.Events
-        watcher.Close()
-        updateTemplate(templatesName, views, funcMap)
-    }()
     views[templatesName] = temp
+}
+
+func runViewWatcher(views map[string]*template.Template, funcMap template.FuncMap) {
+    viewWatcher, err := fsnotify.NewWatcher()
+    if err != nil { panic(err) }
+
+    viewWatcher.Add("views")
+    go func() {
+        for {
+            select {
+            case ev := <-viewWatcher.Events:
+                if ev.Op & fsnotify.Write != fsnotify.Write && ev.Op & fsnotify.Chmod != fsnotify.Chmod {
+                    break
+                }
+                filename := strings.SplitN(ev.Name, "/", 2)[1]
+                for templatesName, _ := range views {
+                    for _, name := range strings.Split(templatesName, ",") {
+                        if name == filename {
+                            updateTemplate(templatesName, views, funcMap)
+                            break
+                        }
+                    }
+                }
+            case err := <-viewWatcher.Errors:
+                log.Printf("view watcher error: %s\n", err)
+            }
+        }
+    }()
 }
 
 func CreateWebAppWithFuncmap(rules []RouteRule, funcMap template.FuncMap) webApp {
     patternMappings := make([]PatternMapping, len(rules))
     views := make(map[string]*template.Template)
+    runViewWatcher(views, funcMap)
+
     for i, v := range rules {
         re := regexp.MustCompile("/{[^}]*}")
         params := re.FindAllString(v.Pattern, -1)
