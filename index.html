@@ -1,0 +1,346 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Vitali by lunastorm</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Vitali</h1>
+        <p>vitali is yet another web framework for Go</p>
+
+        <p class="view"><a href="https://github.com/lunastorm/vitali">View the Project on GitHub <small>lunastorm/vitali</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/lunastorm/vitali/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/lunastorm/vitali/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/lunastorm/vitali">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="vitali" class="anchor" href="#vitali" aria-hidden="true"><span class="octicon octicon-link"></span></a>vitali</h1>
+
+<h2>
+<a id="install" class="anchor" href="#install" aria-hidden="true"><span class="octicon octicon-link"></span></a>Install</h2>
+
+<p>Make sure you have configured the go runtime correctly first.</p>
+
+<pre><code>$ go get github.com/lunastorm/vitali
+</code></pre>
+
+<h2>
+<a id="run-example" class="anchor" href="#run-example" aria-hidden="true"><span class="octicon octicon-link"></span></a>Run example</h2>
+
+<pre><code>$ cd $GOPATH/src/github.com/lunastorm/vitali/example
+$ go run main.go
+2014/04/11 01:50:22 starting server at port 8080...
+</code></pre>
+
+<p>Open http://foo:bar@127.0.0.1:8080/user/foo/slide in the browser, and you can create a new slide or edit the example slide.</p>
+
+<h2>
+<a id="basic-webapp-folder-structure" class="anchor" href="#basic-webapp-folder-structure" aria-hidden="true"><span class="octicon octicon-link"></span></a>Basic webapp folder structure</h2>
+
+<p>You can place almost everything in the base folder. However, you should create the "views" subfolder which is where you put the template html files, and also the i18n.json dictionary.</p>
+
+<h2>
+<a id="create-your-first-resource" class="anchor" href="#create-your-first-resource" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create your first resource</h2>
+
+<p>resources/foo.go</p>
+
+<pre><code>package resources
+import (
+    "github.com/lunastorm/vitali"
+)
+
+type Foo struct {
+    vitali.Ctx
+}
+
+func (c *Foo) Get() interface{} {
+    return "hello world"
+}
+</code></pre>
+
+<p>Every resource struct should embed the <em>vitali.Ctx</em> struct. Then you implement the GET or other methods for it.</p>
+
+<h2>
+<a id="serve-the-webapp" class="anchor" href="#serve-the-webapp" aria-hidden="true"><span class="octicon octicon-link"></span></a>Serve the webapp</h2>
+
+<p>main.go</p>
+
+<pre><code>package main
+
+import (
+    "log"
+    "net/http"
+    "github.com/lunastorm/vitali"
+    "./resources"
+)
+
+func main() {
+    http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+    webapp := vitali.CreateWebApp([]vitali.RouteRule{
+        {"/foo", resources.Foo{
+        }}, 
+    })  
+    http.Handle("/", webapp)
+    log.Printf("starting server at port 8080...")
+    http.ListenAndServe(":8080", nil)
+}
+</code></pre>
+
+<h2>
+<a id="routing" class="anchor" href="#routing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Routing</h2>
+
+<p>The first member of vitali.RouteRule is the path expression, and the second is the target resource's prototype instance. <em>{thisPresentsAPathParameter}</em> You can access the path parameter through the PathParam method, here is an example:</p>
+
+<pre><code>webapp := vitali.CreateWebApp([]vitali.RouteRule{
+    {"/image/{filename}", resources.Image{
+    }},
+})
+
+type Image struct {
+    vitali.Ctx
+}
+
+func (c *Image) Get() interface{} {
+    f, _ := os.Open("images/"+c.PathParam("filename"))
+    return f
+}
+</code></pre>
+
+<h2>
+<a id="method-dispatching" class="anchor" href="#method-dispatching" aria-hidden="true"><span class="octicon octicon-link"></span></a>Method Dispatching</h2>
+
+<p>Implement the methods that returns anything (type interface{}) which corresponds to the HTTP methods.</p>
+
+<p>Pre() is a special function that runs before the HTTP methods if implemented. You can do some initialization and checking in Pre(). Returning nil in Pre() means to continue to invoke the corresponding HTTP method.</p>
+
+<pre><code>type Foo struct {
+    vitali.Ctx
+}
+
+func (c *Foo) Get() interface{}
+func (c *Foo) Post() interface{}
+func (c *Foo) Put() interface{}
+func (c *Foo) Delete() interface{}
+func (c *Foo) Pre() interface{}
+</code></pre>
+
+<h2>
+<a id="predefined-response-types" class="anchor" href="#predefined-response-types" aria-hidden="true"><span class="octicon octicon-link"></span></a>Predefined Response Types</h2>
+
+<p>Some typical HTTP responses are provided. See <a href="https://github.com/lunastorm/vitali/blob/master/response_types.go">https://github.com/lunastorm/vitali/blob/master/response_types.go</a></p>
+
+<p>For example,</p>
+
+<pre><code>func (c *Foo) Pre() interface{} {
+    return c.BadRequest("bad!")
+}
+
+func (c *Foo) Get() interface{} {
+    return c.NotFound()
+}
+</code></pre>
+
+<h2>
+<a id="authentication" class="anchor" href="#authentication" aria-hidden="true"><span class="octicon octicon-link"></span></a>Authentication</h2>
+
+<p>You can provide your customized user and role provider when you implement vitali.UserProvider interface, and then setup the user provider as follows:</p>
+
+<pre><code>type UserProvider interface {
+    AuthHeader(*http.Request) string
+    GetUserAndRole(*http.Request) (string, string)
+}
+
+webapp.UserProvider = &amp;YourUserProvider{...}
+</code></pre>
+
+<h3>
+<a id="authentication-example-http-basic-authentication" class="anchor" href="#authentication-example-http-basic-authentication" aria-hidden="true"><span class="octicon octicon-link"></span></a>Authentication Example: HTTP Basic Authentication</h3>
+
+<p>This example just verifies that the  username is <em>foo</em> and the password is <em>bar</em>. And the role <em>AUTHED</em> will be added when the user is authenticated.</p>
+
+<pre><code>import (
+    "strings"
+    "net/http"
+    "encoding/base64"
+)
+
+type UserProvider struct {
+}
+
+func (c *UserProvider) AuthHeader(r *http.Request) (WWWAuthenticate string) {
+    return `Basic realm="vitali"`
+}
+
+func (c *UserProvider) GetUserAndRole(r *http.Request) (user string, role string) {
+    authHeader := r.Header.Get("Authorization")
+    if !strings.HasPrefix(authHeader, "Basic ") {
+        return
+    }   
+
+    data, err := base64.StdEncoding.DecodeString(strings.SplitN(authHeader, " ", 2)[1])
+    if err != nil {return}
+    tmp := strings.SplitN(string(data), ":", 2)
+    user = tmp[0]
+    password := tmp[1]
+
+    if user == "foo" &amp;&amp; password == "bar" {
+        return user, "AUTHED"
+    } else {
+        user = ""
+        return
+    }   
+}
+</code></pre>
+
+<h2>
+<a id="vitalictx" class="anchor" href="#vitalictx" aria-hidden="true"><span class="octicon octicon-link"></span></a>vitali.Ctx</h2>
+
+<p>This is embedded in all your resource structs and wraps the original *http.Request and http.ResponseWriter.</p>
+
+<pre><code>type Ctx struct {
+    Username    string
+    Roles       Roles
+    Request *http.Request
+    ResponseWriter  http.ResponseWriter
+    ChosenType  MediaType
+    ChosenLang  string
+    ContentType MediaType
+}
+</code></pre>
+
+<p>Refer to <a href="https://github.com/lunastorm/vitali/blob/master/ctx.go">https://github.com/lunastorm/vitali/blob/master/ctx.go</a> for some convinient methods.</p>
+
+<h2>
+<a id="vitaliperm" class="anchor" href="#vitaliperm" aria-hidden="true"><span class="octicon octicon-link"></span></a>vitali.Perm</h2>
+
+<p>An optional member to be embedded in the resource. </p>
+
+<p>For example,</p>
+
+<pre><code>type Image struct {
+    vitali.Ctx
+    vitali.Perm `GET:"AUTHED" DELETE:"ADMIN|OWNER"`
+}
+</code></pre>
+
+<p>means that every GET request to Image should be authenticated, and every DELETE requests by roles other than <em>ADMIN</em> or <em>OWNER</em> are forbidden.</p>
+
+<p>Actually you can use any role name you like. You can add roles to an authenticated user in your <em>UserProvider</em> or the <em>Pre()</em> function like this:</p>
+
+<pre><code>func (c *Image) Pre() interface{} {
+    if /* check if c.Username is image's owner */ {
+        c.Roles.Add("OWNER")
+    }
+}
+</code></pre>
+
+<h2>
+<a id="vitaliconsumes" class="anchor" href="#vitaliconsumes" aria-hidden="true"><span class="octicon octicon-link"></span></a>vitali.Consumes</h2>
+
+<p>It controls which request content types are accepted if specified. For example,</p>
+
+<pre><code>type UserInfo struct {
+    vitali.Ctx
+    vitali.Consumes `POST:"application/x-www-form-urlencoded,application/json"`
+}
+</code></pre>
+
+<p>means that the POST method only accepts content-type <em>application/x-www-form-urlencoded</em> or <em>application/json</em>.</p>
+
+<h2>
+<a id="vitaliprovides-and-vitaliviews" class="anchor" href="#vitaliprovides-and-vitaliviews" aria-hidden="true"><span class="octicon octicon-link"></span></a>vitali.Provides and vitali.Views</h2>
+
+<p>This does the content negotiation with the requester's <em>Accept</em> header.</p>
+
+<pre><code>type UserInfo struct {
+    vitali.Ctx
+    vitali.Provides `GET:"application/json,text/html"`
+    vitali.Views `GET:"base.html,userinfo.html"`
+}
+</code></pre>
+
+<p>The result returned by the GET method will be serialized to JSON automatically if content type <em>application/json</em> is chosen. If <em>text/html</em> is chosen, it will lookup the struct tag of vitali.Views if defined, and execute the templates with the model returned.</p>
+
+<h2>
+<a id="extended-template" class="anchor" href="#extended-template" aria-hidden="true"><span class="octicon octicon-link"></span></a>Extended Template</h2>
+
+<p>Originally you can only use <em>{{.}}</em> to get the model in the template. vitali moves <em>{{.}}</em> to <em>{{.M}}</em>, with .M represents the model.</p>
+
+<p><em>{{.C}}</em> lets you access vitali.Ctx in the view, so that you can display something like username in the page by <em>{{.C.Username}}</em></p>
+
+<p><em>{{.S}}</em> is the i18n dictionary map. This is how you write the string lables in the template: e.g., <em>{{.S.SOMELABEL}}</em></p>
+
+<p>You have to create a file named <em>i18n.json</em> in the <em>views</em> subdirectory like this:</p>
+
+<pre><code>{
+    "en-us": {
+        "SLIDE_NAME": "Slide Name",
+        "CREATE": "Create",
+        "DUPLICATE": "Duplicate",
+        "CREATE_NEW_SLIDE": "Create New Slide"
+    },  
+    "zh-tw": {
+        "SLIDE_NAME": "投影片名稱",
+        "CREATE": "新建",
+        "DUPLICATE": "複製",
+        "CREATE_NEW_SLIDE": "建立新投影片"
+    }   
+}
+</code></pre>
+
+<h2>
+<a id="language-provider" class="anchor" href="#language-provider" aria-hidden="true"><span class="octicon octicon-link"></span></a>Language Provider</h2>
+
+<p>Implement the LangProvider interface and set it in the webapp to select the locale.</p>
+
+<p>For example,</p>
+
+<pre><code>func (c *LangProvider) Select(ctx *vitali.Ctx) (lang string) {
+    lang = ctx.Cookie("lang")
+    if lang != "" {
+        return
+    }
+    lang = "en-us"
+
+    accept := ctx.Header("Accept-Language")
+    /*
+    process the accept-language header
+    */
+    ...
+}
+</code></pre>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/lunastorm">lunastorm</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-63183439-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
