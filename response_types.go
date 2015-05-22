@@ -46,36 +46,40 @@ func (c *Ctx) TempRedirect(uri string) tempRedirect {
 
 // 400
 type badRequest struct {
+    body interface{}
     reason string
 }
 
-func (c *Ctx) BadRequest(reason string) badRequest {
-    return badRequest{reason}
+func (c *Ctx) BadRequest(reason string, bodies ...interface{}) badRequest {
+    return badRequest{extractBody(bodies), reason}
 }
 
 // 401
 type unauthorized struct {
+    body interface{}
     wwwAuthHeader string
 }
 
-func (c *Ctx) Unauthorized(wwwAuthHeader string) unauthorized {
-    return unauthorized{wwwAuthHeader}
+func (c *Ctx) Unauthorized(wwwAuthHeader string, bodies ...interface{}) unauthorized {
+    return unauthorized{extractBody(bodies), wwwAuthHeader}
 }
 
 // 403
 type forbidden struct {
+    body interface{}
 }
 
-func (c *Ctx) Forbidden() forbidden {
-    return forbidden{}
+func (c *Ctx) Forbidden(bodies ...interface{}) forbidden {
+    return forbidden{extractBody(bodies)}
 }
 
 // 404
 type notFound struct {
+    body interface{}
 }
 
-func (c *Ctx) NotFound() notFound {
-    return notFound{}
+func (c *Ctx) NotFound(bodies ...interface{}) notFound {
+    return notFound{extractBody(bodies)}
 }
 
 // 405
@@ -98,27 +102,30 @@ func (c *Ctx) NotAcceptable(provided MediaTypes) notAcceptable {
 
 // 415
 type unsupportedMediaType struct {
+    body interface{}
 }
 
-func (c *Ctx) UnsupportedMediaType() unsupportedMediaType {
-    return unsupportedMediaType{}
+func (c *Ctx) UnsupportedMediaType(bodies ...interface{}) unsupportedMediaType {
+    return unsupportedMediaType{extractBody(bodies)}
 }
 
 // 501
 type notImplemented struct {
+    body interface{}
 }
 
-func (c *Ctx) NotImplemented() notImplemented {
-    return notImplemented{}
+func (c *Ctx) NotImplemented(bodies ...interface{}) notImplemented {
+    return notImplemented{extractBody(bodies)}
 }
 
 // 503
 type serviceUnavailable struct {
+    body interface{}
     seconds int
 }
 
-func (c *Ctx) ServiceUnavailable(seconds int) serviceUnavailable {
-    return serviceUnavailable{seconds}
+func (c *Ctx) ServiceUnavailable(seconds int, bodies ...interface{}) serviceUnavailable {
+    return serviceUnavailable{extractBody(bodies), seconds}
 }
 
 // return this if client is disconnected
@@ -142,4 +149,13 @@ func (c *Ctx) InternalError(e error) internalError {
         why: e.Error(),
         code: errorCode(e.Error()),
     }
+}
+
+func extractBody(bodies []interface{}) interface{}{
+    var body interface{}
+    if len(bodies) > 0 {
+        // Only uses first element as body
+        body = bodies[0]
+    }
+    return body
 }

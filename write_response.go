@@ -56,7 +56,12 @@ func (c *webApp) writeResponse(w *wrappedWriter, r *http.Request, response *inte
         w.Header().Set("Location", v.uri)
         w.WriteHeader(http.StatusTemporaryRedirect)
     case badRequest:
-        http.Error(w, v.reason, http.StatusBadRequest)
+        if v.body != nil {
+            w.WriteHeader(http.StatusBadRequest)
+            c.marshalOutput(w, &v.body, ctx, templateName)
+        } else {
+            http.Error(w, v.reason, http.StatusBadRequest)
+        }
     case unauthorized:
         w.Header()["WWW-Authenticate"] = []string{v.wwwAuthHeader}
         if c.Settings["401_PAGE"] != "" && ctx.ChosenType == "text/html" {
@@ -70,7 +75,12 @@ func (c *webApp) writeResponse(w *wrappedWriter, r *http.Request, response *inte
             defer f.Close()
             io.Copy(w, f)
         } else {
-            http.Error(w, "unauthorized", http.StatusUnauthorized)
+            if v.body != nil {
+                w.WriteHeader(http.StatusUnauthorized)
+                c.marshalOutput(w, &v.body, ctx, templateName)
+            } else {
+                http.Error(w, "unauthorized", http.StatusUnauthorized)
+            }
         }
     case forbidden:
         if c.Settings["403_PAGE"] != "" && ctx.ChosenType == "text/html" {
@@ -84,10 +94,20 @@ func (c *webApp) writeResponse(w *wrappedWriter, r *http.Request, response *inte
             defer f.Close()
             io.Copy(w, f)
         } else {
-            http.Error(w, "Forbidden", http.StatusForbidden)
+            if v.body != nil {
+                w.WriteHeader(http.StatusForbidden)
+                c.marshalOutput(w, &v.body, ctx, templateName)
+            } else {
+                http.Error(w, "Forbidden", http.StatusForbidden)
+            }
         }
     case notFound:
-        http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+        if v.body != nil {
+            w.WriteHeader(http.StatusNotFound)
+            c.marshalOutput(w, &v.body, ctx, templateName)
+        } else {
+            http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+        }
     case methodNotAllowed:
         w.Header().Set("Allow", strings.Join(v.allowed, ", "))
         http.Error(w, http.StatusText(http.StatusMethodNotAllowed),
@@ -101,8 +121,13 @@ func (c *webApp) writeResponse(w *wrappedWriter, r *http.Request, response *inte
         http.Error(w, strings.Join(([]string)(types), ","),
             http.StatusNotAcceptable)
     case unsupportedMediaType:
-        http.Error(w, http.StatusText(http.StatusUnsupportedMediaType),
-            http.StatusUnsupportedMediaType)
+        if v.body != nil {
+            w.WriteHeader(http.StatusUnsupportedMediaType)
+            c.marshalOutput(w, &v.body, ctx, templateName)
+        } else {
+            http.Error(w, http.StatusText(http.StatusUnsupportedMediaType),
+                http.StatusUnsupportedMediaType)
+        }
     case internalError:
         w.err = v
         if c.ErrTemplate != nil {
@@ -114,12 +139,22 @@ func (c *webApp) writeResponse(w *wrappedWriter, r *http.Request, response *inte
                 w.err.code), http.StatusInternalServerError)
         }
     case notImplemented:
-        http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
+        if v.body != nil {
+            w.WriteHeader(http.StatusNotImplemented)
+            c.marshalOutput(w, &v.body, ctx, templateName)
+        } else {
+            http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
+        }
     case serviceUnavailable:
         if v.seconds >= 0 {
             w.Header().Set("Retry-After", fmt.Sprintf("%d", v.seconds))
         }
-        http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
+        if v.body != nil {
+            w.WriteHeader(http.StatusServiceUnavailable)
+            c.marshalOutput(w, &v.body, ctx, templateName)
+        } else {
+            http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
+        }
     case error:
         w.err = internalError{
             where: "",

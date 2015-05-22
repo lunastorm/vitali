@@ -199,7 +199,7 @@ func (c webApp) matchRules(w *wrappedWriter, r *http.Request) (result interface{
                if !checkPermission(PermTag, Method(r.Method),
                        ctx.Roles) {
                    if user == "" {
-                       result = unauthorized{c.UserProvider.AuthHeader(r)}
+                       result = unauthorized{wwwAuthHeader: c.UserProvider.AuthHeader(r)}
                    } else {
                        result = forbidden{}
                    }
