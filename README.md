@@ -116,7 +116,7 @@ type ErrorMessageModel struct {
 }
 
 func (c *Foo) Get() interface{} {
-    return c.NotFound(ErrorMessageModel{Msg: "You've entered the wrong URL."})
+    return c.NotFound(ErrorMessageModel{Msg: "Wrong URL"})
 }
 ```
 
