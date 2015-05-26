@@ -109,6 +109,17 @@ func (c *Foo) Get() interface{} {
 }
 ```
 
+For most client errors which leads to a response with HTTP status code 4xx, you may also return the response with a content body.
+```
+type ErrorMessageModel struct {
+    Msg string `json:"msg"`
+}
+
+func (c *Foo) Get() interface{} {
+    return c.NotFound(ErrorMessageModel{Msg: "Wrong URL"})
+}
+```
+
 ## Authentication
 You can provide your customized user and role provider when you implement vitali.UserProvider interface, and then setup the user provider as follows:
 ```
