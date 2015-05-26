@@ -195,3 +195,44 @@ func TestNotAcceptable(t *testing.T) {
         t.Errorf("vary header is: %s", vary)
     }
 }
+
+type ReturnNotFound struct {
+    Ctx
+    Provides `GET:"application/json"`
+}
+
+type ErrBody struct {
+    Code int `json:"code"`
+    Reason string `json:"reason"`
+}
+
+func (c *ReturnNotFound) Get() interface{} {
+    return c.NotFound(ErrBody{666, "deadbeef"})
+}
+
+func Test4xxErrBody(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/notfound",
+        },
+        Header: make(http.Header),
+    }
+    r.Header.Set("Accept", "application/json")
+
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/notfound", ReturnNotFound{}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusNotFound {
+        t.Errorf("response code is %d", rr.Code)
+    }
+
+    entity := rr.Body.String()
+    if entity != "{\"code\":666,\"reason\":\"deadbeef\"}" {
+        t.Errorf("body is %s", entity)
+    }
+}
