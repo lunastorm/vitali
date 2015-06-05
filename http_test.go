@@ -115,6 +115,25 @@ func TestNoContent(t *testing.T) {
     }
 }
 
+func TestTrailingSlash(t *testing.T) {
+    r := &http.Request{
+        Method: "GET",
+        Host:   "lunastorm.tw",
+        URL: &url.URL{
+            Path: "/nothing/",
+        },
+    }
+    rr := httptest.NewRecorder()
+    webapp := CreateWebApp([]RouteRule{
+        {"/nothing", Nothing{}},
+    })
+    webapp.ServeHTTP(rr, r)
+
+    if rr.Code != http.StatusNoContent {
+        t.Errorf("response code is %d", rr.Code)
+    }
+}
+
 type Info struct {
     Ctx
     Provided string

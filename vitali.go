@@ -357,7 +357,7 @@ func CreateWebAppWithFuncmap(rules []RouteRule, funcMap template.FuncMap) webApp
             names[j] = param[2:len(param)-1]
             transformedPattern = strings.Replace(transformedPattern, param, "[/]{0,1}([^/]*)", -1)
         }
-        patternMappings[i] = PatternMapping{regexp.MustCompile("^"+transformedPattern+"$"), names}
+        patternMappings[i] = PatternMapping{regexp.MustCompile("^"+transformedPattern+"/?$"), names}
 
         funcMap["seq"] = Seq
         tViews, ok := reflect.TypeOf(v.Resource).FieldByName("Views")
