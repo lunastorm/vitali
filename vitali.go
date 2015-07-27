@@ -260,8 +260,12 @@ func getResult(method string, vResourcePtr *reflect.Value) (result interface{}) 
 
 func (c webApp) logRequest(w *wrappedWriter, r *http.Request, elapsedMs float64,
         result interface{}) {
+    remoteAddr := r.Header.Get("X-Forwarded-For")
+    if remoteAddr == "" {
+        remoteAddr = r.RemoteAddr
+    }
     if w.status == 0 {
-        log.Printf("%s %s %s Client Disconnected (%.2f ms)", r.RemoteAddr, r.Method,
+        log.Printf("%s %s %s Client Disconnected (%.2f ms)", remoteAddr, r.Method,
             r.URL.Path, elapsedMs)
     } else {
         errMsg := ""
@@ -272,7 +276,7 @@ func (c webApp) logRequest(w *wrappedWriter, r *http.Request, elapsedMs float64,
         case unsupportedMediaType:
             errMsg = fmt.Sprintf(": %s ", r.Header.Get("Content-Type"))
         }
-        log.Printf("%s %s %s %s %s(%.2f ms, %d bytes)", r.RemoteAddr, r.Method, r.URL.Path,
+        log.Printf("%s %s %s %s %s(%.2f ms, %d bytes)", remoteAddr, r.Method, r.URL.Path,
             http.StatusText(w.status), errMsg, elapsedMs, w.written)
 
         if c.DumpRequest {
